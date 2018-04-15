@@ -15,7 +15,7 @@ func GetDownloadUrlHandler(r registry.Registry) func(http.ResponseWriter, *http.
 
 		namespace, name, provider, version := params["namespace"], params["name"], params["provider"], params["version"]
 
-		if r.ModuleExists(namespace, name, provider, version) {
+		if r.GetModule(namespace, name, provider, version) != nil {
 			writer.Header().Add("X-Terraform-Get", fmt.Sprintf("/v1/download/%s/%s/%s/%s.tgz", namespace, name, provider, version))
 			writer.WriteHeader(http.StatusNoContent)
 		} else {

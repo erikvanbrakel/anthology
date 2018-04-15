@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"github.com/erikvanbrakel/terraform-registry/cmd/registry"
 	"github.com/erikvanbrakel/terraform-registry/cmd/api"
-	"github.com/sirupsen/logrus"
 )
 
 func ListModulesHandler(r registry.Registry) func(http.ResponseWriter, *http.Request) {
@@ -15,8 +14,6 @@ func ListModulesHandler(r registry.Registry) func(http.ResponseWriter, *http.Req
 		params := mux.Vars(request)
 
 		namespace := params["namespace"]
-
-		logrus.Infof("ListModules(namespace=%s",namespace)
 
 		modules, _ := r.ListModules(namespace, "", "", 0, 99999)
 

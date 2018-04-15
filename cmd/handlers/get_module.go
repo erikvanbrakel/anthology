@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"github.com/erikvanbrakel/terraform-registry/cmd/api"
-	"github.com/sirupsen/logrus"
 )
 
 func GetModuleHandler(r registry.Registry) func(http.ResponseWriter, *http.Request) {
@@ -17,8 +16,6 @@ func GetModuleHandler(r registry.Registry) func(http.ResponseWriter, *http.Reque
 		namespace, name, provider := params["namespace"], params["name"], params["provider"]
 
 		version, hasVersion := params["version"]
-
-		logrus.Infof("GetModule(namespace=%s,name=%s,provider=%s,version=%s",namespace,name,provider,version)
 
 		modules, _ := r.ListModules(namespace, name, provider, 0, 9999)
 

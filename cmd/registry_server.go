@@ -9,6 +9,8 @@ import (
 
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"os"
 )
 
 type RegistryServerConfig struct {
@@ -41,12 +43,22 @@ func LoggingMiddleware(handler http.Handler) http.Handler {
 	})
 }
 
+func NormalizePath (input string) string {
+	r := filepath.FromSlash(input)
+
+	if r[len(r)-1] != os.PathSeparator {
+		r = r + string(os.PathSeparator)
+	}
+
+	return r
+}
+
 func NewServer(config RegistryServerConfig) (*RegistryServer, error) {
 
 	router := mux.NewRouter()
 	var r registry.Registry
 
-	r = &registry.FilesystemRegistry{BasePath: config.BasePath}
+	r = &registry.FilesystemRegistry{BasePath: NormalizePath(config.BasePath)}
 
 	router.Use(LoggingMiddleware)
 	router.HandleFunc("/.well-known/terraform.json", handlers.ServiceDiscoveryHandler()).Methods("GET")
