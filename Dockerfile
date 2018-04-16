@@ -13,4 +13,5 @@ WORKDIR /registry
 
 EXPOSE 8082
 
-ENTRYPOINT ./terraform-registry -port=8082 -module_path /src/github.com/erikvanbrakel/terraform-registry/test/modules
+CMD ["-port=8082","-module_path=/src/github.com/erikvanbrakel/terraform-registry/test/modules"]
+ENTRYPOINT ["./terraform-registry"]

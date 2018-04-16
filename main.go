@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"github.com/erikvanbrakel/terraform-registry/cmd"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -17,5 +20,17 @@ func main() {
 	flag.Parse()
 
 	server, _ := cmd.NewServer(config)
-	server.Run()
+	go server.Run()
+
+	var gracefulStop = make(chan os.Signal)
+
+	// watch for SIGTERM and SIGINT from the operating system, and notify the app on
+	// the gracefulStop channel
+	signal.Notify(gracefulStop, syscall.SIGTERM)
+	signal.Notify(gracefulStop, syscall.SIGINT)
+	signal.Notify(gracefulStop, syscall.SIGKILL)
+
+	<- gracefulStop
+
+	os.Exit(0)
 }
