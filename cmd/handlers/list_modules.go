@@ -26,13 +26,58 @@ func ListModulesHandler(r registry.Registry) func(http.ResponseWriter, *http.Req
 
 		namespace := params["namespace"]
 
-		modules, _ := r.ListModules(namespace, "", provider, offset, limit)
+		modules,total,_ := r.ListModules(namespace, "", provider, offset, limit)
 
+		previousOffset := offset - limit
+		if previousOffset < 0 {
+			previousOffset = 0
+		}
+		nextOffset := offset + limit
+		if nextOffset > total {
+			nextOffset = 0
+		}
+
+		currentRoute := mux.CurrentRoute(request)
+
+		nextUrl := ""
+		if nextOffset > 0 {
+			nextRoute,_ := currentRoute.URL(
+				"namespace",namespace,
+				"provider",provider)
+
+			q := nextRoute.Query()
+
+			q.Set("offset", strconv.Itoa(nextOffset))
+			q.Set("limit", strconv.Itoa(limit))
+			q.Set("provider", provider)
+
+			nextRoute.RawQuery = q.Encode()
+			nextUrl = nextRoute.String()
+		}
+
+		previousUrl := ""
+
+		if offset != 0 {
+			previousRoute, _ := currentRoute.
+				URL(
+				"namespace", namespace,
+				"provider", provider)
+			q := previousRoute.Query()
+
+			q.Set("offset", strconv.Itoa(previousOffset))
+			q.Set("limit", strconv.Itoa(limit))
+			q.Set("provider", provider)
+
+			previousRoute.RawQuery = q.Encode()
+			previousUrl = previousRoute.String()
+		}
 		meta := api.Meta{
-			CurrentOffset: 0,
-			Limit:         9999,
-			NextOffset:    2,
-			NextUrl:       "",
+			CurrentOffset: offset,
+			PreviousOffset: previousOffset,
+			Limit:         limit,
+			NextOffset:    nextOffset,
+			NextUrl: nextUrl,
+			PreviousUrl: previousUrl,
 		}
 
 		writer.Header().Add("Content-Type", "application/json")

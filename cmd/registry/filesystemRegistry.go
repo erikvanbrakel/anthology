@@ -28,12 +28,18 @@ func (r *FilesystemRegistry) ListVersions(namespace, name, provider string) ([]M
 	return []ModuleVersions { result }, nil
 }
 
-func (r *FilesystemRegistry) ListModules(namespace, name, provider string, offset, limit int) ([]Module, error) {
+func (r *FilesystemRegistry) ListModules(namespace, name, provider string, offset, limit int) ([]Module,int, error) {
 
 	modules,err := r.getModules(namespace, name, provider)
 
+	count := len(modules)
+
 	if err != nil {
-		return nil,err
+		return nil,0,err
+	}
+
+	if count == 0 {
+		return modules[0:0],0,nil
 	}
 
 	end := limit + offset
@@ -41,7 +47,7 @@ func (r *FilesystemRegistry) ListModules(namespace, name, provider string, offse
 		end = len(modules)-1
 	}
 
-	return modules[offset:end], nil
+	return modules[offset:end],len(modules),nil
 }
 
 func (r *FilesystemRegistry) GetModule(namespace, name, provider, version string) (*Module, error) {

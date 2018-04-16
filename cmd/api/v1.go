@@ -16,10 +16,12 @@ type ListVersionsResponse struct {
 }
 
 type Meta struct {
-	Limit         int    `json:"limit"`
-	CurrentOffset int    `json:"current_offset"`
-	NextOffset    int    `json:"next_offset"`
-	NextUrl       string `json:"next_url"`
+	Limit          int    `json:"limit"`
+	PreviousOffset int    `json:"previous_offset,omitempty"`
+	CurrentOffset  int    `json:"current_offset"`
+	NextOffset     int    `json:"next_offset,omitempty"`
+	NextUrl        string `json:"next_url,omitempty"`
+	PreviousUrl    string `json:"prev_url,omitempty"`
 }
 
 type ApiError struct {
