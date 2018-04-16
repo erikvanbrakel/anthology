@@ -25,3 +25,9 @@ type Meta struct {
 type ApiError struct {
 	Errors []string `json:"errors"`
 }
+
+func NewError(message string) ApiError {
+	return ApiError {
+		Errors: []string { message },
+	}
+}

@@ -17,11 +17,11 @@ func GetModuleHandler(r registry.Registry) func(http.ResponseWriter, *http.Reque
 
 		version, hasVersion := params["version"]
 
-		modules, _ := r.ListModules(namespace, name, provider, 0, 9999)
+		moduleVersions, _ := r.ListVersions(namespace,name,provider)
 
 		var module *registry.Module
 
-		for _, f := range modules {
+		for i, f := range moduleVersions[0].Versions {
 			if hasVersion {
 				if f.Version == version {
 					module = &f
@@ -33,10 +33,10 @@ func GetModuleHandler(r registry.Registry) func(http.ResponseWriter, *http.Reque
 					cver, _ := semver.Make(module.Version)
 
 					if fver.Compare(cver) > 0 {
-						module = &f
+						module = &moduleVersions[0].Versions[i]
 					}
 				} else {
-					module = &f
+					module = &moduleVersions[0].Versions[i]
 				}
 			}
 		}
