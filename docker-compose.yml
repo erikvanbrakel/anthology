@@ -1,0 +1,19 @@
+version: '2.1'
+
+services:
+
+  registry:
+    build: .
+    ports:
+      - 8082:8082
+
+  s3:
+    image: minio/minio
+    command: server /data
+    environment:
+      - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+      - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    ports:
+      - 9000:9000
+    volumes:
+      - ./test/s3:/data

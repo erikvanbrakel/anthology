@@ -17,6 +17,7 @@ func main() {
 	flag.IntVar(&config.Port, "port", 1234, "server port")
 	flag.StringVar(&config.BasePath, "module_path", "", "Base path for module storage")
 
+	flag.StringVar(&config.Bucket, "bucket", "", "Bucket name of s3 storage")
 	flag.Parse()
 
 	server, _ := cmd.NewServer(config)
@@ -30,7 +31,7 @@ func main() {
 	signal.Notify(gracefulStop, syscall.SIGINT)
 	signal.Notify(gracefulStop, syscall.SIGKILL)
 
-	<- gracefulStop
+	<-gracefulStop
 
 	os.Exit(0)
 }

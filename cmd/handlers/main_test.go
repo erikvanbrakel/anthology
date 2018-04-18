@@ -12,6 +12,7 @@ var server *httptest.Server
 func TestMain(m *testing.M) {
 	s,_ := cmd.NewServer(cmd.RegistryServerConfig {
 		BasePath:"../../test/modules",
+		Bucket: "modules",
 	})
 
 

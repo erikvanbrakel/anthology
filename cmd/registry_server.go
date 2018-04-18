@@ -19,6 +19,7 @@ type RegistryServerConfig struct {
 	Port     int
 
 	BasePath string
+	Bucket string
 }
 
 type RegistryServer struct {
@@ -58,7 +59,7 @@ func NewServer(config RegistryServerConfig) (*RegistryServer, error) {
 	router := mux.NewRouter()
 	var r registry.Registry
 
-	r = &registry.FilesystemRegistry{BasePath: normalizePath(config.BasePath)}
+	r = &registry.S3Registry { Bucket: config.Bucket }
 
 	router.Use(LoggingMiddleware)
 	router.HandleFunc("/.well-known/terraform.json", handlers.ServiceDiscoveryHandler()).Methods("GET")
