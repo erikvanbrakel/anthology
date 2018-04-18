@@ -6,6 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 	"errors"
+	"io"
+	"bytes"
+	"archive/tar"
+	"compress/gzip"
 )
 
 type FilesystemRegistry struct {
@@ -67,6 +71,91 @@ func (r *FilesystemRegistry) GetModule(namespace, name, provider, version string
 		Version:   version,
 	}, nil
 }
+
+func (r *FilesystemRegistry) GetModuleData(namespace, name, provider, version string) (*bytes.Buffer, error) {
+
+	module,_ := r.GetModule(namespace,name,provider,version)
+	if module == nil {
+		return nil,nil
+	}
+
+	tar, err := MakeTar(path.Join(r.BasePath, namespace, name, provider, version))
+	gz := gzipit(tar)
+
+
+	return  gz, err
+}
+
+func gzipit(source *bytes.Buffer) *bytes.Buffer {
+
+	filename := "module.tar"
+	var buffer bytes.Buffer
+
+	archiver := gzip.NewWriter(&buffer)
+	archiver.Name = filename
+	defer archiver.Close()
+
+	io.Copy(archiver, source)
+
+	archiver.Flush()
+	return &buffer
+}
+
+func MakeTar(inputPath string) (*bytes.Buffer, error) {
+
+	var buffer bytes.Buffer
+
+	tarball := tar.NewWriter(&buffer)
+	defer tarball.Close()
+
+	info, _ := os.Stat(inputPath)
+
+	var baseDir string
+	if info.IsDir() {
+		baseDir = filepath.Base(inputPath)
+	}
+
+	e := filepath.Walk(inputPath,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			header, err := tar.FileInfoHeader(info, info.Name())
+			if err != nil {
+				return err
+			}
+
+			if baseDir != "" {
+				header.Name, _ = filepath.Rel(inputPath, path)
+				if header.Name == "." {
+					return nil
+				}
+			}
+
+			if err := tarball.WriteHeader(header); err != nil {
+				return err
+			}
+
+			if info.IsDir() {
+				return nil
+			}
+
+			file, err := os.Open(path)
+
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			_, err = io.Copy(tarball, file)
+			return err
+		},
+	)
+	tarball.Flush()
+	return &buffer, e
+}
+
 
 func (r *FilesystemRegistry) getModules(namespace, name, provider string) ([]Module, error) {
 

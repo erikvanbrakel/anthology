@@ -7,6 +7,8 @@ import (
 	"strings"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/sirupsen/logrus"
+	"bytes"
+	"io"
 )
 
 type S3Registry struct {
@@ -38,26 +40,8 @@ func (r *S3Registry) ListVersions(namespace, name, provider string) (versions []
 }
 
 func (r *S3Registry) GetModule(namespace, name, provider, version string) (module *Module, err error) {
-	config := &aws.Config{
-		DisableSSL: aws.Bool(true),
-		S3ForcePathStyle: aws.Bool(true),
-		Region: aws.String("us-east-1"),
-	}
 
-	config.CredentialsChainVerboseErrors = aws.Bool(true)
-
-	s,err := session.NewSession(config)
-
-	if err != nil {
-		return nil, err
-	}
-
-	s3client := s3.New(s)
-
-	_,err = s3client.GetObject(&s3.GetObjectInput{
-		Key: aws.String("/" + strings.Join([]string { namespace, name, provider, version }, "/") + ".tgz"),
-		Bucket: aws.String(r.Bucket),
-	})
+	_,err = r.getObject("/" + strings.Join([]string { namespace, name, provider, version }, "/") + ".tgz")
 
 	if err != nil {
 
@@ -76,6 +60,45 @@ func (r *S3Registry) GetModule(namespace, name, provider, version string) (modul
 		Version: version,
 	},nil
 }
+
+func (r *S3Registry) getObject(key string) (*s3.GetObjectOutput, error) {
+	config := &aws.Config{
+		DisableSSL: aws.Bool(true),
+		S3ForcePathStyle: aws.Bool(true),
+		Region: aws.String("us-east-1"),
+	}
+
+	config.CredentialsChainVerboseErrors = aws.Bool(true)
+
+	s,err := session.NewSession(config)
+
+	if err != nil {
+		return nil, err
+	}
+
+	s3client := s3.New(s)
+
+	return s3client.GetObject(&s3.GetObjectInput{
+		Key: aws.String(key),
+		Bucket: aws.String(r.Bucket),
+	})
+
+
+}
+func (r *S3Registry) GetModuleData(namespace, name, provider, version string) (*bytes.Buffer, error) {
+	object,err := r.getObject("/" + strings.Join([]string { namespace, name, provider, version }, "/") + ".tgz")
+
+	buffer := &bytes.Buffer{}
+
+	if err != nil {
+		return nil, nil
+	}
+
+	io.Copy(buffer, object.Body)
+
+	return buffer, nil
+}
+
 
 func (r *S3Registry) getModules(namespace,name,provider string) (modules []Module, err error) {
 	config := &aws.Config{

@@ -65,7 +65,7 @@ func NewServer(config RegistryServerConfig) (*RegistryServer, error) {
 	router.HandleFunc("/.well-known/terraform.json", handlers.ServiceDiscoveryHandler()).Methods("GET")
 
 	v1 := router.PathPrefix("/v1/").Subrouter()
-	v1.HandleFunc("/download/{namespace}/{name}/{provider}/{version}.tgz", handlers.DownloadHandler(config.BasePath)).Methods("GET")
+	v1.HandleFunc("/download/{namespace}/{name}/{provider}/{version}.tgz", handlers.DownloadHandler(r)).Methods("GET")
 
 	api := v1.PathPrefix("/modules/").Subrouter()
 
