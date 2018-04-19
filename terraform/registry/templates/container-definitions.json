@@ -1,0 +1,23 @@
+[
+    {
+        "name": "registry",
+        "image": "${REGISTRY_IMAGE}",
+        "memoryReservation": 512,
+        "essential": true,
+        "command": ["-bucket=${BUCKET_NAME}", "-port=8082"],
+        "portMappings": [
+            {
+                "protocol": "tcp",
+                "containerPort": 8082
+            }
+        ],
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "${LOG_GROUP}",
+                "awslogs-region": "${LOG_REGION}",
+                "awslogs-stream-prefix": "registry"
+            }
+        }
+    }
+]
