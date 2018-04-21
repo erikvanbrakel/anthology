@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/erikvanbrakel/terraform-registry/cmd/registry"
-	"github.com/erikvanbrakel/terraform-registry/cmd/handlers"
+	"github.com/erikvanbrakel/anthology/cmd/registry"
+	"github.com/erikvanbrakel/anthology/cmd/handlers"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -54,12 +54,9 @@ func normalizePath (input string) string {
 	return r
 }
 
-func NewServer(config RegistryServerConfig) (*RegistryServer, error) {
+func NewServer(config RegistryServerConfig, r registry.Registry) (*RegistryServer, error) {
 
 	router := mux.NewRouter()
-	var r registry.Registry
-
-	r = &registry.S3Registry { Bucket: config.Bucket }
 
 	router.Use(LoggingMiddleware)
 	router.HandleFunc("/.well-known/terraform.json", handlers.ServiceDiscoveryHandler()).Methods("GET")

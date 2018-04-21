@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
-	"github.com/erikvanbrakel/terraform-registry/cmd/registry"
-	"github.com/erikvanbrakel/terraform-registry/cmd/api"
+	"github.com/erikvanbrakel/anthology/cmd/registry"
+	"github.com/erikvanbrakel/anthology/cmd/api"
 )
 
 func ListVersionsHandler(r registry.Registry) func(http.ResponseWriter, *http.Request) {

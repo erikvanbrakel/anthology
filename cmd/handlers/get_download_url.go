@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
-	"github.com/erikvanbrakel/terraform-registry/cmd/registry"
+	"github.com/erikvanbrakel/anthology/cmd/registry"
 	"encoding/json"
-	"github.com/erikvanbrakel/terraform-registry/cmd/api"
+	"github.com/erikvanbrakel/anthology/cmd/api"
 )
 
 func GetDownloadUrlHandler(r registry.Registry) func(http.ResponseWriter, *http.Request) {

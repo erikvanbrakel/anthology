@@ -3,10 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/blang/semver"
-	"github.com/erikvanbrakel/terraform-registry/cmd/registry"
+	"github.com/erikvanbrakel/anthology/cmd/registry"
 	"github.com/gorilla/mux"
 	"net/http"
-	"github.com/erikvanbrakel/terraform-registry/cmd/api"
+	"github.com/erikvanbrakel/anthology/cmd/api"
 )
 
 func GetModuleHandler(r registry.Registry) func(http.ResponseWriter, *http.Request) {

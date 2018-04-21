@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/erikvanbrakel/terraform-registry/cmd/api"
+	"github.com/erikvanbrakel/anthology/cmd/api"
 	"net/http"
 )
 

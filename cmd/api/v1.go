@@ -1,6 +1,6 @@
 package api
 
-import "github.com/erikvanbrakel/terraform-registry/cmd/registry"
+import "github.com/erikvanbrakel/anthology/cmd/registry"
 
 type Disco struct {
 	ModulesV1 string `json:"modules.v1"`

@@ -28,7 +28,7 @@ func TestListModulesWithNamespace(t *testing.T) {
 
 	json.Keys().ContainsOnly("meta", "modules")
 
-	for _, m := range json.Path("$.modules[*].namespace").Array().Iter() {
+	for _, m := range json.Path("$.modules[*].namespace").Array().NotEmpty().Iter() {
 		m.String().Equal("namespace1")
 	}
 }

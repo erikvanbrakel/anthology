@@ -6,9 +6,9 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"github.com/erikvanbrakel/terraform-registry/cmd/registry"
+	"github.com/erikvanbrakel/anthology/cmd/registry"
 	"encoding/json"
-	"github.com/erikvanbrakel/terraform-registry/cmd/api"
+	"github.com/erikvanbrakel/anthology/cmd/api"
 )
 
 func DownloadHandler(r registry.Registry) func(http.ResponseWriter, *http.Request) {
