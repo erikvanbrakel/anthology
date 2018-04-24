@@ -20,6 +20,7 @@ var servers []struct {
 
 func TestMain(m *testing.M) {
 
+	logrus.Infof("Setting up test environment.")
 	access_key, secret_key := "AKIAIOSFODNN7EXAMPLE", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 
 	os.Setenv("AWS_ACCESS_KEY", access_key)
@@ -58,8 +59,10 @@ func TestMain(m *testing.M) {
 
 func createMinioContainer(access_key, secret_key string) (dispose func(), endpoint string) {
 
+	logrus.Info("Creating minio docker container.")
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
+		logrus.WithError(err).Error("Failed to create docker client.")
 		os.Exit(1)
 	}
 
@@ -78,11 +81,13 @@ func createMinioContainer(access_key, secret_key string) (dispose func(), endpoi
 	})
 
 	if err != nil {
+		logrus.WithError(err).Error("Failed to create container.")
 		os.Exit(1)
 	}
 
 	err = client.StartContainer(c.ID, &docker.HostConfig{})
 	if err != nil {
+		logrus.WithError(err).Error("Failed to start container.")
 		os.Exit(1)
 	}
 
@@ -93,6 +98,7 @@ func createMinioContainer(access_key, secret_key string) (dispose func(), endpoi
 		})
 
 		if err != nil {
+			logrus.WithError(err).Error("Failed to stop container.")
 			os.Exit(1)
 		}
 	}
@@ -107,6 +113,7 @@ func createMinioContainer(access_key, secret_key string) (dispose func(), endpoi
 		time.Sleep(time.Second * 5)
 	}
 
+	logrus.Error("Timeout waiting for container.")
 	dispose()
 	os.Exit(1)
 
