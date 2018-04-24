@@ -553,6 +553,12 @@
 			"revisionTime": "2016-01-10T10:55:54Z"
 		},
 		{
+			"checksumSHA1": "+RPbt/bqx8qmTbdc2bL0cjCbVNg=",
+			"path": "github.com/satori/go.uuid",
+			"revision": "36e9d2ebbde5e3f13ab2e25625fd453271d6522e",
+			"revisionTime": "2018-01-03T17:44:51Z"
+		},
+		{
 			"checksumSHA1": "lK3J0U0NAa7yasWtknKsTWpMgYs=",
 			"path": "github.com/sergi/go-diff/diffmatchpatch",
 			"revision": "da645544ed44df016359bd4c0e3dc60ee3a0da43",
