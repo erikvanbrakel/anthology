@@ -223,12 +223,6 @@
 			"revision": ""
 		},
 		{
-			"checksumSHA1": "rHsn/3VxZEo7YTQcJ0ngmU+HcJI=",
-			"path": "github.com/bakins/logrus-middleware",
-			"revision": "6b46244d0b8e0040aee0ee00b6a27a3e0de91388",
-			"revisionTime": "2018-04-05T19:42:55Z"
-		},
-		{
 			"checksumSHA1": "Hy/WzmQkgoUw7piHhaeif3lRrd8=",
 			"path": "github.com/blang/semver",
 			"revision": "c5e971dbed7850a93c23aa6ff69db5771d8e23b3",
