@@ -11,4 +11,5 @@ services:
 install: true
 
 script:
+  docker pull minio/minio
   go test -v ./...
