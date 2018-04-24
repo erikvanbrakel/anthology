@@ -29,7 +29,7 @@ type ApiError struct {
 }
 
 func NewError(message string) ApiError {
-	return ApiError {
-		Errors: []string { message },
+	return ApiError{
+		Errors: []string{message},
 	}
 }

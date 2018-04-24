@@ -2,22 +2,22 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/erikvanbrakel/anthology/cmd/api"
+	"github.com/erikvanbrakel/anthology/cmd/registry"
 	"github.com/gorilla/mux"
 	"net/http"
-	"github.com/erikvanbrakel/anthology/cmd/registry"
-	"github.com/erikvanbrakel/anthology/cmd/api"
 	"strconv"
 )
 
 func ListModulesHandler(r registry.Registry) func(http.ResponseWriter, *http.Request) {
 
-	return func (writer http.ResponseWriter, request *http.Request) {
+	return func(writer http.ResponseWriter, request *http.Request) {
 		params := mux.Vars(request)
 
 		query := request.URL.Query()
 
-		offset,_ := strconv.Atoi(query.Get("offset"))
-		limit,err := strconv.Atoi(query.Get("limit"))
+		offset, _ := strconv.Atoi(query.Get("offset"))
+		limit, err := strconv.Atoi(query.Get("limit"))
 
 		if err != nil {
 			limit = 10
@@ -26,7 +26,7 @@ func ListModulesHandler(r registry.Registry) func(http.ResponseWriter, *http.Req
 
 		namespace := params["namespace"]
 
-		modules,total,_ := r.ListModules(namespace, "", provider, offset, limit)
+		modules, total, _ := r.ListModules(namespace, "", provider, offset, limit)
 
 		previousOffset := offset - limit
 		if previousOffset < 0 {
@@ -41,9 +41,9 @@ func ListModulesHandler(r registry.Registry) func(http.ResponseWriter, *http.Req
 
 		nextUrl := ""
 		if nextOffset > 0 {
-			nextRoute,_ := currentRoute.URL(
-				"namespace",namespace,
-				"provider",provider)
+			nextRoute, _ := currentRoute.URL(
+				"namespace", namespace,
+				"provider", provider)
 
 			q := nextRoute.Query()
 
@@ -60,8 +60,8 @@ func ListModulesHandler(r registry.Registry) func(http.ResponseWriter, *http.Req
 		if offset != 0 {
 			previousRoute, _ := currentRoute.
 				URL(
-				"namespace", namespace,
-				"provider", provider)
+					"namespace", namespace,
+					"provider", provider)
 			q := previousRoute.Query()
 
 			q.Set("offset", strconv.Itoa(previousOffset))
@@ -72,12 +72,12 @@ func ListModulesHandler(r registry.Registry) func(http.ResponseWriter, *http.Req
 			previousUrl = previousRoute.String()
 		}
 		meta := api.Meta{
-			CurrentOffset: offset,
+			CurrentOffset:  offset,
 			PreviousOffset: previousOffset,
-			Limit:         limit,
-			NextOffset:    nextOffset,
-			NextUrl: nextUrl,
-			PreviousUrl: previousUrl,
+			Limit:          limit,
+			NextOffset:     nextOffset,
+			NextUrl:        nextUrl,
+			PreviousUrl:    previousUrl,
 		}
 
 		writer.Header().Add("Content-Type", "application/json")

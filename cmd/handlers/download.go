@@ -1,14 +1,14 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/erikvanbrakel/anthology/cmd/api"
+	"github.com/erikvanbrakel/anthology/cmd/registry"
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 	"strconv"
-	"github.com/erikvanbrakel/anthology/cmd/registry"
-	"encoding/json"
-	"github.com/erikvanbrakel/anthology/cmd/api"
 )
 
 func DownloadHandler(r registry.Registry) func(http.ResponseWriter, *http.Request) {
@@ -36,4 +36,3 @@ func DownloadHandler(r registry.Registry) func(http.ResponseWriter, *http.Reques
 		writer.Header().Set("Content-Length", strconv.FormatInt(written, 10))
 	}
 }
-

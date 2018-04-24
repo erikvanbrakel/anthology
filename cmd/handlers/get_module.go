@@ -3,10 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/blang/semver"
+	"github.com/erikvanbrakel/anthology/cmd/api"
 	"github.com/erikvanbrakel/anthology/cmd/registry"
 	"github.com/gorilla/mux"
 	"net/http"
-	"github.com/erikvanbrakel/anthology/cmd/api"
 )
 
 func GetModuleHandler(r registry.Registry) func(http.ResponseWriter, *http.Request) {
@@ -17,7 +17,7 @@ func GetModuleHandler(r registry.Registry) func(http.ResponseWriter, *http.Reque
 
 		version, hasVersion := params["version"]
 
-		moduleVersions, _ := r.ListVersions(namespace,name,provider)
+		moduleVersions, _ := r.ListVersions(namespace, name, provider)
 
 		var module *registry.Module
 

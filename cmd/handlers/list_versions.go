@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/erikvanbrakel/anthology/cmd/api"
+	"github.com/erikvanbrakel/anthology/cmd/registry"
 	"github.com/gorilla/mux"
 	"net/http"
-	"github.com/erikvanbrakel/anthology/cmd/registry"
-	"github.com/erikvanbrakel/anthology/cmd/api"
 )
 
 func ListVersionsHandler(r registry.Registry) func(http.ResponseWriter, *http.Request) {

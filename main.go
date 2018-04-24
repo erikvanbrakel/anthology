@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"github.com/erikvanbrakel/anthology/cmd"
+	"github.com/erikvanbrakel/anthology/cmd/registry"
 	"os"
 	"os/signal"
 	"syscall"
-	"github.com/erikvanbrakel/anthology/cmd/registry"
 )
 
 func main() {
@@ -17,10 +17,11 @@ func main() {
 	flag.StringVar(&config.KeyFile, "tls_key", "", "TLS certificate key")
 	flag.IntVar(&config.Port, "port", 1234, "server port")
 
-	flag.StringVar(&config.Bucket, "bucket", "", "Bucket name of s3 storage")
+	var bucket string
+	flag.StringVar(&bucket, "bucket", "", "Bucket name of s3 storage")
 	flag.Parse()
 
-	r := registry.S3Registry{ Bucket: config.Bucket }
+	r := registry.S3Registry{Bucket: bucket}
 	server, _ := cmd.NewServer(config, &r)
 	go server.Run()
 

@@ -1,69 +1,76 @@
 package registry
 
 import (
-	"path"
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
-	"errors"
-	"io"
-	"bytes"
-	"archive/tar"
-	"compress/gzip"
 )
 
 type FilesystemRegistry struct {
 	BasePath string
 }
 
+func (r *FilesystemRegistry) getBasepath() string {
+
+	if !strings.HasSuffix(r.BasePath, string(os.PathSeparator)) {
+		return r.BasePath + string(os.PathSeparator)
+	}
+	return r.BasePath
+}
+
 func (r *FilesystemRegistry) ListVersions(namespace, name, provider string) ([]ModuleVersions, error) {
 
-	versions,err := r.getModules(namespace, name, provider)
+	versions, err := r.getModules(namespace, name, provider)
 
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
-	result := ModuleVersions {
-		Source: strings.Join([]string{ namespace, name, provider }, "/"),
+	result := ModuleVersions{
+		Source:   strings.Join([]string{namespace, name, provider}, "/"),
 		Versions: versions,
 	}
 
-	return []ModuleVersions { result }, nil
+	return []ModuleVersions{result}, nil
 }
 
-func (r *FilesystemRegistry) ListModules(namespace, name, provider string, offset, limit int) ([]Module,int, error) {
+func (r *FilesystemRegistry) ListModules(namespace, name, provider string, offset, limit int) ([]Module, int, error) {
 
-	modules,err := r.getModules(namespace, name, provider)
+	modules, err := r.getModules(namespace, name, provider)
 
 	count := len(modules)
 
 	if err != nil {
-		return nil,0,err
+		return nil, 0, err
 	}
 
 	if count == 0 {
-		return modules[0:0],0,nil
+		return modules[0:0], 0, nil
 	}
 
 	end := limit + offset
 	if (end) > len(modules) {
-		end = len(modules)-1
+		end = len(modules)
 	}
 
-	return modules[offset:end],len(modules),nil
+	return modules[offset:end], len(modules), nil
 }
 
 func (r *FilesystemRegistry) GetModule(namespace, name, provider, version string) (*Module, error) {
-	_,err := os.Stat(path.Join(r.BasePath,namespace,name,provider,version))
+	_, err := os.Stat(path.Join(r.getBasepath(), namespace, name, provider, version) + ".tgz")
+
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil,nil
-		} else {
-			return nil,err
+			return nil, nil
 		}
+		return nil, err
 	}
-	return &Module {
+	return &Module{
 		ID:        path.Join(namespace, name, provider, version),
 		Name:      name,
 		Namespace: namespace,
@@ -74,138 +81,85 @@ func (r *FilesystemRegistry) GetModule(namespace, name, provider, version string
 
 func (r *FilesystemRegistry) GetModuleData(namespace, name, provider, version string) (*bytes.Buffer, error) {
 
-	module,_ := r.GetModule(namespace,name,provider,version)
+	module, _ := r.GetModule(namespace, name, provider, version)
 	if module == nil {
-		return nil,nil
+		return nil, nil
 	}
 
-	tar, err := MakeTar(path.Join(r.BasePath, namespace, name, provider, version))
-	gz := gzipit(tar)
+	buffer := &bytes.Buffer{}
 
+	f, err := os.Open(path.Join(r.getBasepath(), namespace, name, provider, version) + ".tgz")
+	defer f.Close()
 
-	return  gz, err
-}
-
-func gzipit(source *bytes.Buffer) *bytes.Buffer {
-
-	filename := "module.tar"
-	var buffer bytes.Buffer
-
-	archiver := gzip.NewWriter(&buffer)
-	archiver.Name = filename
-	defer archiver.Close()
-
-	io.Copy(archiver, source)
-
-	archiver.Flush()
-	return &buffer
-}
-
-func MakeTar(inputPath string) (*bytes.Buffer, error) {
-
-	var buffer bytes.Buffer
-
-	tarball := tar.NewWriter(&buffer)
-	defer tarball.Close()
-
-	info, _ := os.Stat(inputPath)
-
-	var baseDir string
-	if info.IsDir() {
-		baseDir = filepath.Base(inputPath)
+	if err != nil {
+		return buffer, err
 	}
 
-	e := filepath.Walk(inputPath,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
+	_, err = io.Copy(buffer, f)
 
-			header, err := tar.FileInfoHeader(info, info.Name())
-			if err != nil {
-				return err
-			}
-
-			if baseDir != "" {
-				header.Name, _ = filepath.Rel(inputPath, path)
-				if header.Name == "." {
-					return nil
-				}
-			}
-
-			if err := tarball.WriteHeader(header); err != nil {
-				return err
-			}
-
-			if info.IsDir() {
-				return nil
-			}
-
-			file, err := os.Open(path)
-
-			if err != nil {
-				return err
-			}
-			defer file.Close()
-
-			_, err = io.Copy(tarball, file)
-			return err
-		},
-	)
-	tarball.Flush()
-	return &buffer, e
+	return buffer, err
 }
 
+func (r *FilesystemRegistry) PublishModule(namespace, name, provider, version string, data io.Reader) (err error) {
+	os.MkdirAll(path.Join(r.getBasepath(), namespace, name, provider), os.ModePerm)
+	outfile, err := os.Create(path.Join(r.getBasepath(), namespace, name, provider, version) + ".tgz")
+	defer outfile.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(outfile, data)
+	return err
+}
 
 func (r *FilesystemRegistry) getModules(namespace, name, provider string) ([]Module, error) {
 
-	glob := r.BasePath
+	glob := r.getBasepath()
 
 	if namespace != "" {
-		glob = path.Join(glob,namespace)
+		glob = path.Join(glob, namespace)
 	} else {
-		glob = path.Join(glob,"*")
+		glob = path.Join(glob, "*")
 	}
 
 	if name != "" {
 		glob = path.Join(glob, name)
 	} else {
-		glob = path.Join(glob,"*")
+		glob = path.Join(glob, "*")
 	}
 
 	if provider != "" {
 		glob = path.Join(glob, provider)
 	} else {
-		glob = path.Join(glob,"*")
+		glob = path.Join(glob, "*")
 	}
 
-	glob = path.Join(glob,"*")
-
+	glob = path.Join(glob, "*.tgz")
 
 	var modules []Module
 
-	dirs,err := filepath.Glob(glob)
+	dirs, err := filepath.Glob(glob)
 
 	if err != nil {
 		return nil, errors.New("unable to read module directories")
 	}
 
-	for _,f := range dirs {
-		parts := strings.Split(strings.TrimPrefix(f, r.BasePath), string(os.PathSeparator))
+	for _, f := range dirs {
+		parts := strings.Split(strings.TrimPrefix(f, r.getBasepath()), string(os.PathSeparator))
 
 		if len(parts) != 4 {
 			continue
 		}
 
 		modules = append(modules, Module{
-			ID: strings.Join(parts, "/"),
+			ID:        fmt.Sprintf("%s/%s/%s/%s", parts[0], parts[1], parts[2], strings.TrimRight(parts[3], ".tgz)")),
 			Namespace: parts[0],
-			Name: parts[1],
-			Provider: parts[2],
-			Version: parts[3],
+			Name:      parts[1],
+			Provider:  parts[2],
+			Version:   strings.TrimRight(parts[3], ".tgz"),
 		})
 	}
 
 	return modules, nil
 }
-

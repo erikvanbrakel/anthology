@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/erikvanbrakel/anthology/cmd/api"
+	"github.com/erikvanbrakel/anthology/cmd/registry"
 	"github.com/gorilla/mux"
 	"net/http"
-	"github.com/erikvanbrakel/anthology/cmd/registry"
-	"encoding/json"
-	"github.com/erikvanbrakel/anthology/cmd/api"
 )
 
 func GetDownloadUrlHandler(r registry.Registry) func(http.ResponseWriter, *http.Request) {

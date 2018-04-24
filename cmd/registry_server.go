@@ -1,32 +1,27 @@
 package cmd
 
 import (
-	"github.com/erikvanbrakel/anthology/cmd/registry"
 	"github.com/erikvanbrakel/anthology/cmd/handlers"
+	"github.com/erikvanbrakel/anthology/cmd/registry"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 
 	"fmt"
 	"net/http"
-	"path/filepath"
-	"os"
 )
 
 type RegistryServerConfig struct {
 	CertFile string
 	KeyFile  string
 	Port     int
-
-	BasePath string
-	Bucket string
 }
 
 type RegistryServer struct {
 	Router   *mux.Router
 	Registry registry.Registry
 
-	Port int
+	Port              int
 	CertFile, KeyFile string
 }
 
@@ -36,22 +31,12 @@ func LoggingMiddleware(handler http.Handler) http.Handler {
 
 		var f = logrus.Fields{}
 
-		for k,v := range vars {
+		for k, v := range vars {
 			f[k] = v
 		}
 		logrus.WithFields(f).Infof("%s - - [%s]", r.RemoteAddr, r.URL)
 		handler.ServeHTTP(w, r)
 	})
-}
-
-func normalizePath (input string) string {
-	r := filepath.FromSlash(input)
-
-	if r[len(r)-1] != os.PathSeparator {
-		r = r + string(os.PathSeparator)
-	}
-
-	return r
 }
 
 func NewServer(config RegistryServerConfig, r registry.Registry) (*RegistryServer, error) {
@@ -81,11 +66,13 @@ func NewServer(config RegistryServerConfig, r registry.Registry) (*RegistryServe
 
 	api.HandleFunc("/{namespace}/{name}/{provider}", handlers.GetModuleHandler(r)).Methods("GET")
 
+	api.HandleFunc("/{namespace}/{name}/{provider}/{version}", handlers.PublishHandler(r)).Methods("POST")
+
 	return &RegistryServer{
-		Router: router,
-		Port: config.Port,
+		Router:   router,
+		Port:     config.Port,
 		CertFile: config.CertFile,
-		KeyFile: config.KeyFile,
+		KeyFile:  config.KeyFile,
 	}, nil
 }
 
