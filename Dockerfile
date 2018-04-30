@@ -12,11 +12,10 @@ RUN go build && cp ./anthology /registry/anthology
 FROM alpine:latest
 
 COPY --from=build /src/github.com/erikvanbrakel/anthology/anthology /registry/anthology
-COPY --from=build /src/github.com/erikvanbrakel/anthology/test/modules /modules
 
 WORKDIR /registry
 
 EXPOSE 8082
 
-CMD ["-port=8082","-module_path=/modules"]
+CMD ["--port=8082","--filesystem.basepath=/modules","--backend=filesystem"]
 ENTRYPOINT ["./anthology"]

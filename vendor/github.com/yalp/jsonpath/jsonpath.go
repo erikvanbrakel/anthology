@@ -151,7 +151,7 @@ func (p *parser) parsePath() (err error) {
 			p.add(func(r, c interface{}, a actions) (interface{}, error) { return c, nil })
 			return nil
 		default:
-			err = fmt.Errorf("unexcepted token %s at %d", p.text(), p.column())
+			err = fmt.Errorf("unexpected token %s at %d", p.text(), p.column())
 		}
 	}
 	return
