@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/jessevdk/go-flags"
+	"github.com/sirupsen/logrus"
 	"os"
 )
 
@@ -12,6 +13,12 @@ type CommonOptions struct {
 	Backend    string            `short:"b" long:"backend" choice:"s3" choice:"filesystem"`
 	S3         S3Options         `group:"S3 configuration" namespace:"s3"`
 	FileSystem FileSystemOptions `group:"Filesystem configuration" namespace:"filesystem"`
+	SSLConfig  SSLOptions        `group:"SSL Configuration" namespace:"ssl"`
+}
+
+type SSLOptions struct {
+	Certificate string `long:"certificate" description:"Path to the SSL certificate"`
+	Key         string `long:"key" description:"Path to the SSL certificate key"`
 }
 
 type S3Options struct {
@@ -35,4 +42,21 @@ func LoadConfig() error {
 	}
 
 	return nil
+}
+
+func (o SSLOptions) IsValid() bool {
+	if o.Certificate == "" && o.Key == "" {
+		return false
+	}
+
+	if _, err := os.Stat(o.Certificate); err != nil {
+		logrus.Warnf("SSL configuration not valid, certificate file %s not found", o.Certificate)
+		return false
+	}
+
+	if _, err := os.Stat(o.Key); err != nil {
+		logrus.Warnf("SSL configuration not valid, key file %s not found", o.Key)
+		return false
+	}
+	return true
 }

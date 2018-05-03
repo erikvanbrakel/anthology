@@ -32,8 +32,21 @@ func (S3Registry) PublishModule(namepsace, name, provider, version string, data 
 	panic("implement me")
 }
 
-func (S3Registry) GetModuleData(namespace, name, provider, version string) (reader *bytes.Buffer, err error) {
-	panic("implement me")
+func (r *S3Registry) GetModuleData(namespace, name, provider, version string) (reader *bytes.Buffer, err error) {
+	s3client := s3.New(r.getSession())
+
+	obj, err := s3client.GetObject(&s3.GetObjectInput{
+		Key:    aws.String(strings.Join([]string{namespace, name, provider, version}, "/") + ".tgz"),
+		Bucket: aws.String(r.bucket),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	buffer := &bytes.Buffer{}
+	io.Copy(buffer, obj.Body)
+	return buffer, nil
 }
 
 func (r *S3Registry) getModules(namespace, name, provider string) (modules []models.Module, err error) {
