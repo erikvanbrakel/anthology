@@ -11,6 +11,8 @@ RUN go build && cp ./anthology /registry/anthology
 
 FROM alpine:latest
 
+RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
+
 COPY --from=build /src/github.com/erikvanbrakel/anthology/anthology /registry/anthology
 
 WORKDIR /registry
