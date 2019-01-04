@@ -1,3 +1,5 @@
+[![Gitter chat](https://badges.gitter.im/anthology-registry/community.png)](https://gitter.im/anthology-registry/community)
+
 # Anthology, a private Terraform Registry
 
 ## Description
