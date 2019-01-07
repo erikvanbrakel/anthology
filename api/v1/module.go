@@ -3,149 +3,236 @@ package v1
 import (
 	"fmt"
 	"github.com/blang/semver"
-	"github.com/erikvanbrakel/anthology/app"
 	"github.com/erikvanbrakel/anthology/models"
-	"github.com/go-ozzo/ozzo-routing"
 	"io"
 	"net/http"
 	"strconv"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
+	"github.com/erikvanbrakel/anthology/services"
+	"errors"
+	"context"
 )
 
 type (
-	moduleService interface {
-		Query(rs app.RequestScope, namespace, name, provider string, verified bool, offset, limit int) ([]models.Module, int, error)
-		QueryVersions(rs app.RequestScope, namespace, name, provider string) ([]models.Module, error)
-		Exists(rs app.RequestScope, namespace, name, provider, version string) (bool, error)
-		Get(rs app.RequestScope, namespace, name, provider, version string) (*models.Module, error)
-		GetData(rs app.RequestScope, namespace, name, provider, version string) (io.Reader, error)
-		Publish(rs app.RequestScope, namespace, name, provider, version string, data io.Reader) error
-	}
-
 	moduleResource struct {
-		service moduleService
-	}
-
-	apiError struct {
-		Errors []string `json:"errors"`
+		services.ModuleService
 	}
 )
 
-func ServeModuleResource(rg *routing.RouteGroup, service moduleService) {
-	r := &moduleResource{service}
+type API struct {
+	Modules *moduleResource
+}
 
-	// List modules
-	rg.Get("/", r.query)
-	rg.Get("/<namespace>", r.query)
+func NewAPI(service services.ModuleService) (*API, error) {
+
+	if service == nil {
+		return nil, errors.New("service can't be nil")
+	}
+
+	return &API{
+		Modules: &moduleResource{service },
+	}, nil
+}
+
+func (a *API) Router() *chi.Mux {
+
+	router := chi.NewRouter()
+	rg := router.With(a.MetaCtx)
+
+	r := a.Modules
+
+		// List modules
+	rg.
+		With(a.ListCtx).
+		Get("/", r.query)
+
+	rg.
+		With(a.ListCtx).
+		Get("/{namespace}", r.query)
 
 	// Search modules
-	rg.Get("/search")
+	// rg.Get("/search")
 
 	// List available versions for a specific module
-	rg.Get("/<namespace>/<name>/<provider>/versions", r.queryVersions)
+	rg.Get("/{namespace}/{name}/{provider}/versions", r.queryVersions)
 
 	// Download source code for a specific module version
-	rg.Get("/<namespace>/<name>/<provider>/<version>/download", r.getDownloadUrl).Name("GetDownloadUrl")
+	rg.With(a.ModuleCtx).Get("/{namespace}/{name}/{provider}/{version}/download", r.getDownloadUrl)
 
 	// Download the latest version of a module
-	rg.Get("/<namespace>/<name>/<provider>/download", r.getLatestDownloadUrl)
+	rg.Get("/{namespace}/{name}/{provider}/download", r.getLatestDownloadUrl)
 
 	// List latest version of module for all providers
-	rg.Get("/<namespace>/<name>", r.queryLatest)
+	rg.Get("/{namespace}/{name}", r.queryLatest)
 
 	// Latest version for a specific module provider
-	rg.Get("/<namespace>/<name>/<provider>", r.getLatest)
+	rg.Get("/{namespace}/{name}/{provider}", r.getLatest)
 
 	// Get a specific module
-	rg.Get("/<namespace>/<name>/<provider>/<version>", r.get)
+	rg.With(a.ModuleCtx).Get("/{namespace}/{name}/{provider}/{version}", r.get)
 
 	// Publish a specific module
-	rg.Post("/<namespace>/<name>/<provider>/<version>", r.publish)
+	rg.Post("/{namespace}/{name}/{provider}/{version}", r.publish)
 
-	rg.Get("/<namespace>/<name>/<provider>/<version>/data.tgz", r.getModuleData).Name("GetModuleData")
+	rg.With(a.ModuleCtx).Get("/{namespace}/{name}/{provider}/{version}/data.tgz", r.getModuleData)
+
+	return router
 }
 
-func (r *moduleResource) getModuleData(c *routing.Context) error {
-	rs := app.GetRequestScope(c)
+func (a *API) ListCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-	provider := c.Param("provider")
-	version := c.Param("version")
+		page := &PaginationInfo{
+			CurrentOffset: 0,
+			Limit: 10,
+		}
 
-	data, err := r.service.GetData(rs, namespace, name, provider, version)
+		if o := r.URL.Query().Get("offset"); o != "" {
+			offset, err := strconv.Atoi(o)
+			if err != nil {
+				render.Status(r, http.StatusBadRequest)
+				return
+			}
+			page.CurrentOffset = offset
+		}
+
+		if lim := r.URL.Query().Get("offset"); lim != "" {
+			limit, err := strconv.Atoi(lim)
+			if err != nil {
+				render.Status(r, http.StatusBadRequest)
+				return
+			}
+			page.Limit = limit
+		}
+
+		ctx := context.WithValue(r.Context(), "pagination", page)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (a *API) MetaCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		metadata := &ModuleMetadata{
+			Namespace: chi.URLParam(r, "namespace"),
+			Name: chi.URLParam(r, "name"),
+			Provider: chi.URLParam(r, "provider"),
+			Version: chi.URLParam(r, "version"),
+		}
+
+		ctx := context.WithValue(r.Context(), "module_metadata", metadata)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (a *API) ModuleCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		m := r.Context().Value("module_metadata").(*ModuleMetadata)
+		module, err := a.Modules.Get(m.Namespace, m.Name, m.Provider, m.Version)
+
+		if err != nil {
+			render.Render(w,r,ErrInternalServerError(err))
+			return
+		}
+
+		if module == nil {
+			render.Render(w,r,ErrNotFound())
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "module", module)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+type ModuleMetadata struct {
+	Namespace string
+	Name string
+	Provider string
+	Version string
+}
+
+func (m *moduleResource) getModuleData(w http.ResponseWriter, r *http.Request) {
+
+	module := r.Context().Value("module").(*models.Module)
+
+	data, err := module.Data()
 
 	if err != nil {
-		return err
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		_, err = io.Copy(w, data)
 	}
 
-	_, err = io.Copy(c.Response, data)
-	return err
 }
 
-func (r *moduleResource) publish(c *routing.Context) error {
-	rs := app.GetRequestScope(c)
-	namespace, name, provider, version := c.Param("namespace"), c.Param("name"), c.Param("provider"), c.Param("version")
+func (m *moduleResource) publish(w http.ResponseWriter, r *http.Request) {
 
-	err := r.service.Publish(rs, namespace, name, provider, version, c.Request.Body)
+	meta := r.Context().Value("module_metadata").(*ModuleMetadata)
+
+	err := m.Publish(meta.Namespace, meta.Name, meta.Provider, meta.Version, r.Body)
+
 	if err != nil {
-		return err
+		render.Render(w, r, ErrInternalServerError(err))
+		return
 	}
 
-	return r.getDownloadUrl(c)
+	m.getDownloadUrl(w, r)
 }
 
-func (r *moduleResource) query(c *routing.Context) error {
-	rs := app.GetRequestScope(c)
+func (m *moduleResource) query(w http.ResponseWriter, r *http.Request) {
 
-	offset, _ := strconv.Atoi(c.Query("offset", "0"))
-	limit, _ := strconv.Atoi(c.Query("limit", "10"))
+	namespace :=  chi.URLParam(r, "namespace")
+	provider := chi.URLParam(r, "provider")
+	verified, _ := strconv.ParseBool(chi.URLParam(r, "verified"))
 
-	namespace := c.Param("namespace")
-	provider := c.Query("provider", "")
-	verified, _ := strconv.ParseBool(c.Query("verified", "false"))
+	page := r.Context().Value("pagination").(*PaginationInfo)
 
-	modules, count, err := r.service.Query(rs, namespace, "", provider, verified, offset, limit)
+	modules, count, err := m.Query(namespace, "", provider, verified, page.CurrentOffset, page.Limit)
 
 	if err != nil {
-		return err
+		render.Render(w, r, ErrInternalServerError(err))
+		return
 	}
 
 	if count == 0 {
-		c.Response.WriteHeader(http.StatusNotFound)
-		return c.Write(apiError{[]string{"not found"}})
+		render.Render(w,r,ErrNotFound())
+		return
 	}
 
-	paginationInfo := getPaginationInfo(c, count)
-
-	return c.Write(PaginatedList{
-		PaginationInfo: paginationInfo,
+	render.JSON(w, r, PaginatedList{
+		PaginationInfo: *page,
 		Modules:        modules,
 	})
 }
 
-func (r *moduleResource) queryVersions(c *routing.Context) error {
-	rs := app.GetRequestScope(c)
+func (m *moduleResource) queryVersions(w http.ResponseWriter, req *http.Request) {
 
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-	provider := c.Param("provider")
+	namespace := chi.URLParam(req, "namespace")
+	name := chi.URLParam(req, "name")
+	provider := chi.URLParam(req, "provider")
 
-	versionsByModule, err := r.service.QueryVersions(rs, namespace, name, provider)
+	versionsByModule, err := m.QueryVersions(namespace, name, provider)
 
 	if err != nil {
-		return err
+		render.Render(w, req, ErrInternalServerError(err))
+		return
 	}
 
 	if len(versionsByModule) == 0 {
-		c.Response.WriteHeader(http.StatusNotFound)
-		return c.Write(apiError{[]string{"not found"}})
+		render.Render(w, req, ErrNotFound())
+		return
 	}
 
-	return c.Write(struct {
+	render.JSON(w, req, struct {
 		Modules VersionsList `json:"modules"`
 	}{
 		VersionsList{
-
 			{
 				Source:   fmt.Sprintf("%s/%s/%s", namespace, name, provider),
 				Versions: versionsByModule,
@@ -154,42 +241,53 @@ func (r *moduleResource) queryVersions(c *routing.Context) error {
 	})
 }
 
-func (r *moduleResource) getDownloadUrl(c *routing.Context) error {
-	namespace, name, provider, version := c.Param("namespace"), c.Param("name"), c.Param("provider"), c.Param("version")
+func (m *moduleResource) getDownloadUrl(w http.ResponseWriter, r *http.Request) {
 
-	if exists, _ := r.service.Exists(app.GetRequestScope(c), namespace, name, provider, version); exists {
+	meta := r.Context().Value("module_metadata").(*ModuleMetadata)
 
-		url := c.URL("GetModuleData",
-			"namespace", namespace,
-			"name", name,
-			"provider", provider,
-			"version", version,
-		)
-		c.Response.Header().Set("X-Terraform-Get", url)
-		c.Response.WriteHeader(http.StatusNoContent)
-		return nil
+	if exists, _ := m.Exists(meta.Namespace, meta.Name, meta.Provider, meta.Version); exists {
+		render.Status(r, http.StatusNoContent)
+		render.Render(w, r, NewTerraformModuleUrl(meta))
+
+		return
 	}
 
-	c.Response.WriteHeader(http.StatusNotFound)
-	return c.Write(apiError{[]string{"not found"}})
+	render.Render(w, r, ErrNotFound())
 }
 
-func (r *moduleResource) getLatestDownloadUrl(c *routing.Context) error {
-	rs := app.GetRequestScope(c)
+type TerraformModuleUrl struct {
+	*ModuleMetadata
+}
 
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-	provider := c.Param("provider")
+func NewTerraformModuleUrl(metadata *ModuleMetadata) render.Renderer {
+	return &TerraformModuleUrl { metadata }
+}
 
-	modules, count, err := r.service.Query(rs, namespace, name, provider, false, 0, 100000)
+func (r *TerraformModuleUrl) Render(w http.ResponseWriter, req *http.Request) error {
+	rc := chi.RouteContext(req.Context())
+	prefix := req.URL.Path[: (len(req.URL.Path) - len(rc.RoutePath))]
+
+	w.Header().Set("X-Terraform-Get", fmt.Sprintf("%v/%v/%v/%v/%v/data.tgz", prefix, r.Namespace, r.Name, r.Provider, r.Version ))
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+func (m *moduleResource) getLatestDownloadUrl(w http.ResponseWriter, req *http.Request) {
+
+	namespace := chi.URLParam(req, "namespace")
+	name := chi.URLParam(req, "name")
+	provider := chi.URLParam(req, "provider")
+
+	modules, count, err := m.Query(namespace, name, provider, false, 0, 100000)
 
 	if err != nil {
-		return err
+		render.Render(w, req, ErrInternalServerError(err))
+		return
 	}
 
 	if count == 0 {
-		c.Response.WriteHeader(http.StatusNotFound)
-		return c.Write(apiError{[]string{"not found"}})
+		render.Render(w, req, ErrNotFound())
+		return
 	}
 
 	var latestVersion semver.Version
@@ -201,56 +299,60 @@ func (r *moduleResource) getLatestDownloadUrl(c *routing.Context) error {
 		}
 	}
 
-	url := c.URL("GetDownloadUrl",
-		"namespace", c.Param("namespace"),
-		"name", c.Param("name"),
-		"provider", c.Param("provider"),
-		"version", latestVersion.String(),
-	)
+	prefix := req.URL.Path[:len(req.URL.Path) - len("/download")]
+	url := fmt.Sprintf("%v/%v/download", prefix, latestVersion)
 
-	c.Response.Header().Set("Location", url)
-	c.Response.WriteHeader(http.StatusFound)
+	render.Render(w, req, &Redirect{ URL: url })
+}
+
+type Redirect struct {
+	URL string
+}
+
+func (r *Redirect) Render(w http.ResponseWriter, req *http.Request) error {
+	w.Header().Set("Location", r.URL)
+	render.Status(req, http.StatusFound)
 	return nil
 }
 
-func (r *moduleResource) get(c *routing.Context) error {
-	rs := app.GetRequestScope(c)
+func (m *moduleResource) get(w http.ResponseWriter, req *http.Request) {
 
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-	provider := c.Param("provider")
-	version := c.Param("version")
+	namespace := chi.URLParam(req, "namespace")
+	name := chi.URLParam(req, "name")
+	provider := chi.URLParam(req, "provider")
+	version := chi.URLParam(req, "version")
 
-	module, err := r.service.Get(rs, namespace, name, provider, version)
+	module, err := m.Get(namespace, name, provider, version)
 
 	if err != nil {
-		return err
+		render.Render(w, req, ErrInternalServerError(err))
+		return
 	}
 
 	if module == nil {
-		c.Response.WriteHeader(http.StatusNotFound)
-		return c.Write(apiError{[]string{"not found"}})
+		render.Render(w, req, ErrNotFound())
+		return
 	}
 
-	return c.Write(module)
+	render.JSON(w, req, module)
 }
 
-func (r *moduleResource) getLatest(c *routing.Context) error {
-	rs := app.GetRequestScope(c)
+func (m *moduleResource) getLatest(w http.ResponseWriter, req *http.Request) {
 
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-	provider := c.Param("provider")
+	namespace := chi.URLParam(req, "namespace")
+	name := chi.URLParam(req, "name")
+	provider := chi.URLParam(req, "provider")
 
-	modules, err := r.service.QueryVersions(rs, namespace, name, provider)
+	modules, err := m.QueryVersions(namespace, name, provider)
 
 	if err != nil {
-		return err
+		render.Render(w, req, ErrInternalServerError(err))
+		return
 	}
 
 	if len(modules) == 0 {
-		c.Response.WriteHeader(http.StatusNotFound)
-		return c.Write(apiError{[]string{"not found"}})
+		render.Render(w, req, ErrNotFound())
+		return
 	}
 
 	var module = models.Module{
@@ -266,24 +368,24 @@ func (r *moduleResource) getLatest(c *routing.Context) error {
 		}
 	}
 
-	return c.Write(module)
+	render.JSON(w, req, module)
 }
 
-func (r *moduleResource) queryLatest(c *routing.Context) error {
-	rs := app.GetRequestScope(c)
+func (m *moduleResource) queryLatest(w http.ResponseWriter, req *http.Request) {
 
-	namespace := c.Param("namespace")
-	name := c.Param("name")
+	namespace := chi.URLParam(req, "namespace")
+	name := chi.URLParam(req, "name")
 
-	modules, err := r.service.QueryVersions(rs, namespace, name, "")
+	modules, err := m.QueryVersions(namespace, name, "")
 
 	if err != nil {
-		return err
+		render.Render(w, req, ErrInternalServerError(err))
+		return
 	}
 
 	if len(modules) == 0 {
-		c.Response.WriteHeader(http.StatusNotFound)
-		return c.Write(apiError{[]string{"not found"}})
+		render.Render(w, req, ErrNotFound())
+		return
 	}
 
 	var latestVersions = map[string]models.Module{}
@@ -304,8 +406,8 @@ func (r *moduleResource) queryLatest(c *routing.Context) error {
 		v = append(v, value)
 	}
 
-	return c.Write(PaginatedList{
-		PaginationInfo: getPaginationInfo(c, len(v)),
+	render.JSON(w, req, PaginatedList{
+		PaginationInfo: getPaginationInfo(chi.RouteContext(req.Context()), len(v)),
 		Modules:        v,
 	})
 }
@@ -315,9 +417,10 @@ type VersionsList []struct {
 	Versions []models.Module `json:"versions"`
 }
 
-func getPaginationInfo(c *routing.Context, count int) PaginationInfo {
-	limit, _ := strconv.Atoi(c.Query("limit", "10"))
-	offset, _ := strconv.Atoi(c.Query("offset", "0"))
+func getPaginationInfo(c *chi.Context, count int) PaginationInfo {
+
+	limit,_ := strconv.Atoi(c.URLParam("limit"))
+	offset,_ := strconv.Atoi(c.URLParam("offset"))
 
 	return PaginationInfo{
 		CurrentOffset: offset,

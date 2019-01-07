@@ -3,9 +3,7 @@ package registry
 import (
 	"bytes"
 	"errors"
-	"github.com/erikvanbrakel/anthology/app"
 	"github.com/erikvanbrakel/anthology/models"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"path"
@@ -15,6 +13,12 @@ import (
 
 type FilesystemRegistry struct {
 	basePath string
+}
+
+func NewFilesystemRegistry(basePath string) (Registry, error) {
+	return &FilesystemRegistry{
+		basePath: basePath,
+	}, nil
 }
 
 func (r *FilesystemRegistry) ListModules(namespace, name, provider string, offset, limit int) (modules []models.Module, total int, err error) {
@@ -48,7 +52,7 @@ func (r *FilesystemRegistry) GetModuleData(namespace, name, provider, version st
 	panic("implement me")
 }
 
-func NewFilesystemRegistry(options app.FileSystemOptions) Registry {
+/*func NewFilesystemRegistry(options app.FileSystemOptions) Registry {
 
 	registry := FilesystemRegistry{basePath: options.BasePath}
 
@@ -59,7 +63,7 @@ func NewFilesystemRegistry(options app.FileSystemOptions) Registry {
 	logrus.Infof("Using Filesystem Registry with basepath %s", registry.basePath)
 
 	return &registry
-}
+}*/
 
 func (r *FilesystemRegistry) getModules(namespace, name, provider string) ([]models.Module, error) {
 

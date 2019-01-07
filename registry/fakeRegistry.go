@@ -32,19 +32,19 @@ func (r *InMemoryRegistry) ListModules(namespace, name, provider string, offset,
 }
 
 func (r *InMemoryRegistry) PublishModule(namespace, name, provider, version string, data io.Reader) error {
+
+	contents := new(bytes.Buffer)
+	contents.ReadFrom(data)
+
 	r.modules = append(r.modules, models.Module{
-		namespace,
-		name,
-		provider,
-		version,
+		Namespace: namespace,
+		Name:      name,
+		Provider:  provider,
+		Version:   version,
+		Data:     func() (*bytes.Buffer,error) {
+			return contents, nil
+		},
 	})
-
-	id := strings.Join([]string{namespace, name, provider, version}, "/")
-
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(data)
-
-	r.data[id] = buf.Bytes()
 
 	return nil
 }

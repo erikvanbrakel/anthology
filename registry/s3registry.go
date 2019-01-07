@@ -6,16 +6,25 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/erikvanbrakel/anthology/app"
 	"github.com/erikvanbrakel/anthology/models"
 	"github.com/sirupsen/logrus"
 	"io"
 	"strings"
+	"errors"
 )
 
 type S3Registry struct {
 	bucket   string
 	endpoint string
+}
+
+func NewS3Registry(bucket, endpoint string) (Registry, error) {
+	if bucket == "" { return nil, errors.New("bucket doesn't exist") }
+
+	return &S3Registry{
+		bucket: bucket,
+		endpoint: endpoint,
+	}, nil
 }
 
 func (r *S3Registry) ListModules(namespace, name, provider string, offset, limit int) (modules []models.Module, total int, err error) {
@@ -111,11 +120,4 @@ func (r *S3Registry) getSession() *session.Session {
 	s, _ := session.NewSession(config)
 
 	return s
-}
-
-func NewS3Registry(options app.S3Options) Registry {
-	return &S3Registry{
-		options.Bucket,
-		options.Endpoint,
-	}
 }

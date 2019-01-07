@@ -6,14 +6,12 @@ import (
 
 	"bytes"
 	"github.com/erikvanbrakel/anthology/api/v1"
-	"github.com/erikvanbrakel/anthology/app"
 	"github.com/erikvanbrakel/anthology/registry"
 	"github.com/erikvanbrakel/anthology/services"
 	"github.com/gavv/httpexpect"
-	"github.com/go-ozzo/ozzo-routing"
-	"github.com/go-ozzo/ozzo-routing/content"
-	"github.com/sirupsen/logrus"
 	"net/http"
+	"github.com/go-chi/chi"
+	"github.com/hashicorp/terraform/helper/acctest"
 )
 
 type apiTestCase struct {
@@ -25,20 +23,6 @@ type apiTestCase struct {
 	assert func(*testing.T, *httpexpect.Response, *httptest.Server)
 }
 
-func newRouter() *routing.Router {
-	logger := logrus.New()
-	logger.Level = logrus.PanicLevel
-
-	router := routing.New()
-
-	router.Use(
-		app.Init(logger),
-		content.TypeNegotiator(content.JSON),
-	)
-
-	return router
-}
-
 func runAPITests(t *testing.T, dataset []testModule, tests []apiTestCase) {
 	for _, test := range tests {
 		t.Run(test.tag, func(t *testing.T) {
@@ -48,14 +32,27 @@ func runAPITests(t *testing.T, dataset []testModule, tests []apiTestCase) {
 				r.PublishModule(m.namespace, m.name, m.provider, m.version, bytes.NewBuffer(m.data))
 			}
 
-			router := newRouter()
-			v1.ServeModuleResource(&router.RouteGroup, services.NewModuleService(r))
-			server := httptest.NewServer(router)
+			s, _ := services.NewModuleService(r)
+			root := chi.NewRouter()
+			api,_ := v1.NewAPI(s)
+
+			// use a random prefix to make sure relative URLs don't depend on absolute paths
+			mountpath := "/" + acctest.RandString(3)
+
+			root.Mount(mountpath, api.Router())
+
+			server := httptest.NewServer(root)
 			defer server.Close()
 
-			e := httpexpect.New(t, server.URL)
+			e := httpexpect.WithConfig(httpexpect.Config{
+				BaseURL: server.URL,
+				Printers: []httpexpect.Printer {
+					httpexpect.NewDebugPrinter(t, true),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
+			})
 
-			result := e.Request(test.method, test.url).
+			result := e.Request(test.method, mountpath + test.url).
 				WithClient(&http.Client{
 					CheckRedirect: func(req *http.Request, via []*http.Request) error {
 						return http.ErrUseLastResponse
