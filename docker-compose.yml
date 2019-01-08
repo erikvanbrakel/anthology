@@ -2,16 +2,32 @@ version: '2.1'
 
 services:
 
-  registry:
+  proxy:
+    image: traefik:1.7-alpine
+    command: --web --docker --docker.domain=localtest.me --entryPoints='Name:https Address::443 TLS' --defaultEntrypoints=https
+
+    ports:
+     - 443:443
+     - 8080:8080
+
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+
+    depends_on:
+      - registry_s3
+      - registry_filesystem
+
+  registry_filesystem:
     build: .
-    command: serve --port=8082 --backend=s3
+    command: serve --port=8082 --backend=filesystem --filesystem.basepath=/modules/
+
+  registry_s3:
+    build: .
+    command: serve --port=8082 --backend=s3 --s3.bucket=terraform-modules --s3.endpoint=http://s3:9000
 
     environment:
       - AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
       - AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-
-    ports:
-      - 8082:8082
 
     depends_on:
       - s3
@@ -35,7 +51,7 @@ services:
       /bin/sh -c "
       /usr/bin/mc config host add s3 http://s3:9000/ $$MINIO_ACCESS_KEY $$MINIO_SECRET_KEY;
       /usr/bin/mc rm -r --force s3/terraform-modules;
-      /usr/bin/mc mb s3/terraform-modules --region us-west-2;
+      /usr/bin/mc mb s3/terraform-modules --region us-east-1;
       /usr/bin/mc policy download s3/terraform-modules;
       exit 0;"
 
