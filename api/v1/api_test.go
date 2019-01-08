@@ -11,7 +11,8 @@ import (
 	"github.com/gavv/httpexpect"
 	"net/http"
 	"github.com/go-chi/chi"
-	"github.com/hashicorp/terraform/helper/acctest"
+	"math/rand"
+	"time"
 )
 
 type apiTestCase struct {
@@ -23,6 +24,16 @@ type apiTestCase struct {
 	assert func(*testing.T, *httpexpect.Response, *httptest.Server)
 }
 
+func randomString(length int) string {
+	rand.Seed(time.Now().UTC().UnixNano())
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	b := make([]rune, length)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+
+	return string(b)
+}
 func runAPITests(t *testing.T, dataset []testModule, tests []apiTestCase) {
 	for _, test := range tests {
 		t.Run(test.tag, func(t *testing.T) {
@@ -37,7 +48,7 @@ func runAPITests(t *testing.T, dataset []testModule, tests []apiTestCase) {
 			api,_ := v1.NewAPI(s)
 
 			// use a random prefix to make sure relative URLs don't depend on absolute paths
-			mountpath := "/" + acctest.RandString(3)
+			mountpath := "/" + randomString(3)
 
 			root.Mount(mountpath, api.Router())
 
