@@ -14,6 +14,8 @@ import (
 	"github.com/go-chi/chi"
 	"errors"
 	"strings"
+	"github.com/go-chi/render"
+	"github.com/go-chi/chi/middleware"
 )
 
 type Server struct {
@@ -80,6 +82,13 @@ func NewServer() (*Server, error) {
 	}
 
 	rootHandler := chi.NewRouter()
+	rootHandler.Use(middleware.Logger)
+	rootHandler.Get("/.well-known/terraform.json", func(w http.ResponseWriter, r *http.Request) {
+		render.JSON(w, r, map[string]string{
+			"modules.v1": "/v1",
+		})
+	})
+
 	rootHandler.Mount("/v1", api.Router())
 
 

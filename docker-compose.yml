@@ -4,8 +4,18 @@ services:
 
   registry:
     build: .
+    command: serve --port=8082 --backend=s3
+
+    environment:
+      - AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+      - AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
     ports:
       - 8082:8082
+
+    depends_on:
+      - s3
+      - createbucket
 
   s3:
     image: minio/minio
@@ -15,5 +25,19 @@ services:
       - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
     ports:
       - 9000:9000
-    volumes:
-      - ./test/s3:/data
+
+  createbucket:
+    image: minio/mc
+    environment:
+      - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+      - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add s3 http://s3:9000/ $$MINIO_ACCESS_KEY $$MINIO_SECRET_KEY;
+      /usr/bin/mc rm -r --force s3/terraform-modules;
+      /usr/bin/mc mb s3/terraform-modules --region us-west-2;
+      /usr/bin/mc policy download s3/terraform-modules;
+      exit 0;"
+
+    depends_on:
+      - s3

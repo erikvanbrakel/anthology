@@ -9,6 +9,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"io/ioutil"
+	"fmt"
 )
 
 type FilesystemRegistry struct {
@@ -16,9 +18,13 @@ type FilesystemRegistry struct {
 }
 
 func NewFilesystemRegistry(basePath string) (Registry, error) {
-	return &FilesystemRegistry{
-		basePath: basePath,
-	}, nil
+	registry := &FilesystemRegistry{basePath }
+
+	if !strings.HasSuffix(registry.basePath, string(os.PathSeparator)) {
+		registry.basePath = registry.basePath + string(os.PathSeparator)
+	}
+
+	return registry, nil
 }
 
 func (r *FilesystemRegistry) ListModules(namespace, name, provider string, offset, limit int) (modules []models.Module, total int, err error) {
@@ -44,26 +50,19 @@ func (r *FilesystemRegistry) ListModules(namespace, name, provider string, offse
 
 }
 
-func (r *FilesystemRegistry) PublishModule(namespace, name, provider, version string, data io.Reader) (err error) {
-	panic("implement me")
+func (r *FilesystemRegistry) PublishModule(namespace, name, provider, version string, data io.Reader) (error) {
+	content, _ := ioutil.ReadAll(data)
+	os.MkdirAll(fmt.Sprintf("%v/%v/%v/%v/", r.basePath, namespace, name, provider), os.ModePerm)
+	return ioutil.WriteFile(fmt.Sprintf("%v/%v/%v/%v/%v.tgz", r.basePath, namespace, name, provider, version), content, os.ModePerm)
 }
 
-func (r *FilesystemRegistry) GetModuleData(namespace, name, provider, version string) (reader *bytes.Buffer, err error) {
-	panic("implement me")
+func (r *FilesystemRegistry) GetModuleData(namespace, name, provider, version string) (*bytes.Buffer, error) {
+
+	content, _ := ioutil.ReadFile(fmt.Sprintf("%v/%v/%v/%v/%v.tgz", r.basePath, namespace, name, provider, version))
+
+	return bytes.NewBuffer(content), nil
+
 }
-
-/*func NewFilesystemRegistry(options app.FileSystemOptions) Registry {
-
-	registry := FilesystemRegistry{basePath: options.BasePath}
-
-	if !strings.HasSuffix(registry.basePath, string(os.PathSeparator)) {
-		registry.basePath = registry.basePath + string(os.PathSeparator)
-	}
-
-	logrus.Infof("Using Filesystem Registry with basepath %s", registry.basePath)
-
-	return &registry
-}*/
 
 func (r *FilesystemRegistry) getModules(namespace, name, provider string) ([]models.Module, error) {
 
@@ -108,6 +107,9 @@ func (r *FilesystemRegistry) getModules(namespace, name, provider string) ([]mod
 			Namespace: parts[0],
 			Name:      parts[1],
 			Provider:  parts[2],
+			Data:      func() (*bytes.Buffer, error) {
+				return r.GetModuleData(namespace, name, provider, strings.TrimRight(parts[3], ".tgz"))
+			},
 			Version:   strings.TrimRight(parts[3], ".tgz"),
 		})
 	}

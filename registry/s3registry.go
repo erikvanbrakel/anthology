@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/erikvanbrakel/anthology/models"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -37,8 +38,18 @@ func (r *S3Registry) ListModules(namespace, name, provider string, offset, limit
 	return modules, len(modules), nil
 }
 
-func (S3Registry) PublishModule(namepsace, name, provider, version string, data io.Reader) (err error) {
-	panic("implement me")
+func (r *S3Registry) PublishModule(namespace, name, provider, version string, data io.Reader) (error) {
+	s3client := s3.New(r.getSession())
+	manager := s3manager.NewUploaderWithClient(s3client)
+
+
+	_, err := manager.Upload(&s3manager.UploadInput {
+		Body:   data,
+		Key:    aws.String(strings.Join([]string{namespace, name, provider, version}, "/") + ".tgz"),
+		Bucket: aws.String(r.bucket),
+	})
+
+	return err
 }
 
 func (r *S3Registry) GetModuleData(namespace, name, provider, version string) (reader *bytes.Buffer, err error) {
@@ -96,6 +107,9 @@ func (r *S3Registry) getModules(namespace, name, provider string) (modules []mod
 				Namespace: parts[0],
 				Name:      parts[1],
 				Provider:  parts[2],
+				Data:      func() (*bytes.Buffer, error) {
+					return r.GetModuleData(namespace, name, provider, strings.TrimRight(parts[3], ".tgz"))
+				},
 				Version:   strings.TrimRight(parts[3], ".tgz"),
 			})
 		}
