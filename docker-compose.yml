@@ -40,7 +40,7 @@ services:
       - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
       - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
     ports:
-      - 9000:9000
+      - 9000
 
   createbucket:
     image: minio/mc
