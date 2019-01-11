@@ -23,7 +23,7 @@ services:
 
   registry_s3:
     build: .
-    command: serve --port=8082 --backend=s3 --s3.bucket=terraform-modules --s3.endpoint=http://s3:9000
+    command: serve --port=8082 --backend=s3 --s3.bucket=terraform-modules --s3.endpoint=http://s3:9000 --s3.region=us-east-2
 
     environment:
       - AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
@@ -39,6 +39,7 @@ services:
     environment:
       - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
       - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      - MINIO_REGION=us-east-2
     ports:
       - 9000
 
@@ -51,7 +52,7 @@ services:
       /bin/sh -c "
       /usr/bin/mc config host add s3 http://s3:9000/ $$MINIO_ACCESS_KEY $$MINIO_SECRET_KEY;
       /usr/bin/mc rm -r --force s3/terraform-modules;
-      /usr/bin/mc mb s3/terraform-modules --region us-east-1;
+      /usr/bin/mc mb s3/terraform-modules --region us-east-2;
       /usr/bin/mc policy download s3/terraform-modules;
       exit 0;"
 

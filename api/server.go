@@ -30,7 +30,8 @@ func ConfigureRegistry() (registry.Registry, error) {
 		log.Println("Configuring S3 backend")
 		bucket := viper.GetString("s3.bucket")
 		endpoint := viper.GetString("s3.endpoint")
-		return registry.NewS3Registry(bucket, endpoint)
+		region := viper.GetString("s3.region")
+		return registry.NewS3Registry(bucket, endpoint, region)
 
 	case "filesystem":
 		log.Println("Configuring Filesystem backend")
@@ -39,7 +40,7 @@ func ConfigureRegistry() (registry.Registry, error) {
 		return registry.NewFilesystemRegistry(basepath)
 
 	case "demo":
-		log.Println("Configuring demo backend (in-memory)")
+		log.Println("Configuring demo backend (in-memory).")
 
 		r := registry.NewFakeRegistry()
 
@@ -71,7 +72,12 @@ func NewServer() (*Server, error) {
 		return nil, err
 	}
 
-	service, err  := services.NewModuleService(r)
+	err = r.Initialize()
+	if err != nil {
+		return nil, err
+	}
+
+	service, err := services.NewModuleService(r)
 	if err != nil {
 		return nil, err
 	}

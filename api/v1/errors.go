@@ -32,3 +32,11 @@ func ErrInternalServerError(err error) render.Renderer {
 		Errors: []string { err.Error() },
 	}
 }
+
+func ErrPayloadTooLarge() render.Renderer {
+	return &ErrResponse{
+		Err: nil,
+		HTTPStatusCode: http.StatusRequestEntityTooLarge,
+		Errors: []string{"the payload of the request exceeds the maximum upload size"},
+	}
+}

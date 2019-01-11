@@ -116,3 +116,7 @@ func (r *FilesystemRegistry) getModules(namespace, name, provider string) ([]mod
 
 	return modules, nil
 }
+
+func (r *FilesystemRegistry) Initialize() error {
+	return nil
+}

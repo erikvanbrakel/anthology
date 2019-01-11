@@ -18,37 +18,23 @@ var serveCmd = &cobra.Command{
 		server.Start()
 	},
 }
-/*
-func buildRouter(logger *logrus.Logger, reg registry.Registry) *routing.Router {
-	router := routing.New()
-
-	router.To("GET,HEAD", "/ping", func(c *routing.Context) error {
-		c.Abort()
-		return c.Write("OK" + app.Version)
-	})
-
-	router.Use(
-		app.Init(logger),
-		content.TypeNegotiator(content.JSON),
-	)
-
-
-	rg := router.Group("/v1/modules")
-
-	v1.ServeModuleResource(rg, services.NewModuleService(reg))
-	return router
-}*/
 
 func init() {
 	RootCmd.AddCommand(serveCmd)
 
 	serveCmd.Flags().StringP("port", "", "8080", "Port the service listens on")
-	serveCmd.Flags().StringP("backend", "", "", "")
+	serveCmd.Flags().StringP("backend", "", "demo", "Which backend to use. Valid options are s3, filesystem or demo.")
+
 	serveCmd.Flags().StringP("ssl.certificate", "", "", "")
 	serveCmd.Flags().StringP("ssl.key", "", "", "")
+
 	serveCmd.Flags().StringP("filesystem.basepath", "", "", "")
+
 	serveCmd.Flags().StringP("s3.bucket", "", "", "")
 	serveCmd.Flags().StringP("s3.endpoint", "", "", "")
+	serveCmd.Flags().StringP("s3.region", "", "us-east-1", "")
 
+	serveCmd.Flags().BoolP("publishing.enabled","",false, "")
+	serveCmd.Flags().StringP("publishing.maximum_size","","1000", "")
 	viper.BindPFlags(serveCmd.Flags())
 }

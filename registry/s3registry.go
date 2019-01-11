@@ -17,14 +17,16 @@ import (
 type S3Registry struct {
 	bucket   string
 	endpoint string
+	region   string
 }
 
-func NewS3Registry(bucket, endpoint string) (Registry, error) {
+func NewS3Registry(bucket, endpoint, region string) (Registry, error) {
 	if bucket == "" { return nil, errors.New("bucket doesn't exist") }
 
 	return &S3Registry{
 		bucket: bucket,
 		endpoint: endpoint,
+		region: region,
 	}, nil
 }
 
@@ -121,7 +123,7 @@ func (r *S3Registry) getModules(namespace, name, provider string) (modules []mod
 func (r *S3Registry) getSession() *session.Session {
 	config := &aws.Config{
 		S3ForcePathStyle: aws.Bool(true),
-		Region:           aws.String("us-east-1"),
+		Region:           aws.String(r.region),
 	}
 	if r.endpoint != "" {
 		if !strings.HasPrefix(r.endpoint, "https") {
@@ -134,4 +136,16 @@ func (r *S3Registry) getSession() *session.Session {
 	s, _ := session.NewSession(config)
 
 	return s
+}
+
+func (r *S3Registry) Initialize() error {
+
+
+	s3client := s3.New(r.getSession())
+
+	_, err := s3client.HeadBucket(&s3.HeadBucketInput{
+		Bucket: aws.String(r.bucket),
+	})
+
+	return err
 }

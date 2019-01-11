@@ -12,6 +12,7 @@ import (
 	"github.com/erikvanbrakel/anthology/services"
 	"errors"
 	"context"
+	"github.com/spf13/viper"
 )
 
 type (
@@ -72,8 +73,10 @@ func (a *API) Router() *chi.Mux {
 	// Get a specific module
 	rg.With(a.ModuleCtx).Get("/{namespace}/{name}/{provider}/{version}", r.get)
 
-	// Publish a specific module
-	rg.Post("/{namespace}/{name}/{provider}/{version}", r.publish)
+	if viper.GetBool("publishing.enabled") {
+		// Publish a specific module
+		rg.Post("/{namespace}/{name}/{provider}/{version}", r.publish)
+	}
 
 	rg.With(a.ModuleCtx).Get("/{namespace}/{name}/{provider}/{version}/data.tgz", r.getModuleData)
 
@@ -175,8 +178,13 @@ func (m *moduleResource) publish(w http.ResponseWriter, r *http.Request) {
 
 	meta := r.Context().Value("module_metadata").(*ModuleMetadata)
 
-	err := m.Publish(meta.Namespace, meta.Name, meta.Provider, meta.Version, r.Body)
+	maximumSize := viper.GetInt64("publishing.maximum_size") * 1024
+	if r.ContentLength > maximumSize {
+		render.Render(w, r, ErrPayloadTooLarge())
+		return
+	}
 
+	err := m.Publish(meta.Namespace, meta.Name, meta.Provider, meta.Version, io.LimitReader(r.Body, r.ContentLength))
 	if err != nil {
 		render.Render(w, r, ErrInternalServerError(err))
 		return

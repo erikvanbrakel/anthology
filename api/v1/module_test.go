@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"github.com/spf13/viper"
 )
 
 var errorNotFound = "not found"
@@ -218,7 +219,10 @@ func TestPublishModule(t *testing.T) {
 	dataset := []testModule{}
 
 	moduleData := "some data"
+	bigModule := randomString(2000)
 
+	viper.Set("publishing.maximum_size", 1)
+	viper.Set("publishing.enabled", true)
 	runAPITests(t, dataset, []apiTestCase{
 		{
 			"publish a new module",
@@ -232,6 +236,22 @@ func TestPublishModule(t *testing.T) {
 
 				response.Body().Equal(moduleData)
 			},
+		},
+		{
+			"publish an oversized new module",
+			"POST", "/namespace1/module1/gcp/3.0.0", bigModule,
+			http.StatusRequestEntityTooLarge,
+			func(t *testing.T, r *httpexpect.Response, server *httptest.Server) { },
+		},
+	})
+
+	viper.Set("publishing.enabled", false)
+	runAPITests(t, dataset, []apiTestCase{
+		{
+			"publish a new module (publish disabled)",
+			"POST", "/namespace1/module1/gcp/3.0.0", moduleData,
+			http.StatusMethodNotAllowed,
+			func(t *testing.T, response *httpexpect.Response, server *httptest.Server) {},
 		},
 	})
 }

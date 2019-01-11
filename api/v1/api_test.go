@@ -34,6 +34,7 @@ func randomString(length int) string {
 
 	return string(b)
 }
+
 func runAPITests(t *testing.T, dataset []testModule, tests []apiTestCase) {
 	for _, test := range tests {
 		t.Run(test.tag, func(t *testing.T) {

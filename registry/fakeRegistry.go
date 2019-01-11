@@ -62,3 +62,7 @@ func (r *InMemoryRegistry) GetModuleData(namespace, name, provider, version stri
 func NewFakeRegistry() Registry {
 	return &InMemoryRegistry{data: map[string][]byte{}}
 }
+
+func (r *InMemoryRegistry) Initialize() error {
+	return nil
+}
