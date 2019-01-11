@@ -15,3 +15,5 @@
 
 # JetBrains GoLand editor files
 .idea
+
+pkg/

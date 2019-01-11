@@ -11,5 +11,14 @@ services:
 install: true
 
 script:
-  - go test -v ./api/...
-  - go test -v ./tests/...
+  - make test
+  - make publish
+
+deploy:
+  provider: releases
+  file_glob: true
+  api_key: "$GITHUB_TOKEN"
+  file: "pkg/*.zip"
+  skip_cleanup: true
+  on:
+    tags: true
