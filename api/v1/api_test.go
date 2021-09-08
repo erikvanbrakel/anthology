@@ -39,7 +39,7 @@ func newRouter() *routing.Router {
 	return router
 }
 
-func runAPITests(t *testing.T, dataset []testModule, tests []apiTestCase) {
+func runModuleAPITests(t *testing.T, dataset []testModule, tests []apiTestCase) {
 	for _, test := range tests {
 		t.Run(test.tag, func(t *testing.T) {
 			r := registry.NewFakeRegistry()
@@ -70,10 +70,57 @@ func runAPITests(t *testing.T, dataset []testModule, tests []apiTestCase) {
 	}
 }
 
+func runProviderAPITests(t *testing.T, dataset []testProvider, tests []apiTestCase) {
+	for _, test := range tests {
+		t.Run(test.tag, func(t *testing.T) {
+			r := registry.NewFakeRegistry()
+
+			for _, p := range dataset {
+				r.PublishProvider(p.namespace, p.name, p.version, p.os, p.arch, bytes.NewBuffer(p.data))
+			}
+
+			router := newRouter()
+			v1.ServeProviderResource(&router.RouteGroup, services.NewProviderService(r))
+			server := httptest.NewServer(router)
+			defer server.Close()
+
+			e := httpexpect.New(t, server.URL)
+
+			result := e.Request(test.method, test.url).
+				WithClient(&http.Client{
+					CheckRedirect: func(req *http.Request, via []*http.Request) error {
+						return http.ErrUseLastResponse
+					},
+				}).
+				WithHeader("Content-Type", "application/json").
+				WithBytes([]byte(test.body)).
+				Expect().Status(test.status)
+
+			test.assert(t, result, server)
+		})
+	}
+}
+
+func assertError(error string) func(*testing.T, *httpexpect.Response, *httptest.Server) {
+	return func(t *testing.T, r *httpexpect.Response, server *httptest.Server) {
+		errors := r.JSON().Object().Value("errors").Array()
+		errors.Contains(error)
+	}
+}
+
 type testModule struct {
 	namespace string
 	name      string
 	provider  string
 	version   string
+	data      []byte
+}
+
+type testProvider struct {
+	namespace string
+	name      string
+	version   string
+	os        string
+	arch      string
 	data      []byte
 }

@@ -24,10 +24,6 @@ type (
 	moduleResource struct {
 		service moduleService
 	}
-
-	apiError struct {
-		Errors []string `json:"errors"`
-	}
 )
 
 func ServeModuleResource(rg *routing.RouteGroup, service moduleService) {
@@ -115,9 +111,9 @@ func (r *moduleResource) query(c *routing.Context) error {
 		return c.Write(apiError{[]string{"not found"}})
 	}
 
-	paginationInfo := getPaginationInfo(c, count)
+	paginationInfo := getModulePaginationInfo(c, count)
 
-	return c.Write(PaginatedList{
+	return c.Write(ModulePaginatedList{
 		PaginationInfo: paginationInfo,
 		Modules:        modules,
 	})
@@ -142,9 +138,9 @@ func (r *moduleResource) queryVersions(c *routing.Context) error {
 	}
 
 	return c.Write(struct {
-		Modules VersionsList `json:"modules"`
+		Modules ModuleVersionsList `json:"modules"`
 	}{
-		VersionsList{
+		ModuleVersionsList{
 
 			{
 				Source:   fmt.Sprintf("%s/%s/%s", namespace, name, provider),
@@ -304,18 +300,18 @@ func (r *moduleResource) queryLatest(c *routing.Context) error {
 		v = append(v, value)
 	}
 
-	return c.Write(PaginatedList{
-		PaginationInfo: getPaginationInfo(c, len(v)),
+	return c.Write(ModulePaginatedList{
+		PaginationInfo: getModulePaginationInfo(c, len(v)),
 		Modules:        v,
 	})
 }
 
-type VersionsList []struct {
+type ModuleVersionsList []struct {
 	Source   string          `json:"source"`
 	Versions []models.Module `json:"versions"`
 }
 
-func getPaginationInfo(c *routing.Context, count int) PaginationInfo {
+func getModulePaginationInfo(c *routing.Context, count int) PaginationInfo {
 	limit, _ := strconv.Atoi(c.Query("limit", "10"))
 	offset, _ := strconv.Atoi(c.Query("offset", "0"))
 
@@ -325,16 +321,7 @@ func getPaginationInfo(c *routing.Context, count int) PaginationInfo {
 	}
 }
 
-type PaginatedList struct {
+type ModulePaginatedList struct {
 	PaginationInfo PaginationInfo `json:"meta"`
 	Modules        interface{}    `json:"modules"`
-}
-
-type PaginationInfo struct {
-	Limit          int    `json:"limit"`
-	PreviousOffset int    `json:"previous_offset"`
-	PreviousUrl    int    `json:"previous_url"`
-	CurrentOffset  int    `json:"current_offset"`
-	NextOffset     int    `json:"next_offset"`
-	NextUrl        string `json:"next_url"`
 }
