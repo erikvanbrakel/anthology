@@ -1,0 +1,169 @@
+# github.com/ajg/form v0.0.0-20160822230020-523a5da1a92f
+## explicit
+github.com/ajg/form
+# github.com/aws/aws-sdk-go v1.13.40-0.20180430214558-52d5a986b0e0
+## explicit
+github.com/aws/aws-sdk-go/aws
+github.com/aws/aws-sdk-go/aws/awserr
+github.com/aws/aws-sdk-go/aws/awsutil
+github.com/aws/aws-sdk-go/aws/client
+github.com/aws/aws-sdk-go/aws/client/metadata
+github.com/aws/aws-sdk-go/aws/corehandlers
+github.com/aws/aws-sdk-go/aws/credentials
+github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds
+github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
+github.com/aws/aws-sdk-go/aws/credentials/stscreds
+github.com/aws/aws-sdk-go/aws/defaults
+github.com/aws/aws-sdk-go/aws/ec2metadata
+github.com/aws/aws-sdk-go/aws/endpoints
+github.com/aws/aws-sdk-go/aws/request
+github.com/aws/aws-sdk-go/aws/session
+github.com/aws/aws-sdk-go/aws/signer/v4
+github.com/aws/aws-sdk-go/internal/sdkio
+github.com/aws/aws-sdk-go/internal/sdkrand
+github.com/aws/aws-sdk-go/internal/shareddefaults
+github.com/aws/aws-sdk-go/private/protocol
+github.com/aws/aws-sdk-go/private/protocol/query
+github.com/aws/aws-sdk-go/private/protocol/query/queryutil
+github.com/aws/aws-sdk-go/private/protocol/rest
+github.com/aws/aws-sdk-go/private/protocol/restxml
+github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
+github.com/aws/aws-sdk-go/service/s3
+github.com/aws/aws-sdk-go/service/sts
+# github.com/blang/semver v3.5.2-0.20180305174007-c5e971dbed78+incompatible
+## explicit
+github.com/blang/semver
+# github.com/davecgh/go-spew v1.1.1
+## explicit
+github.com/davecgh/go-spew/spew
+# github.com/fatih/structs v1.0.1-0.20180123065059-ebf56d35bba7
+## explicit
+github.com/fatih/structs
+# github.com/gavv/httpexpect v0.0.0-20170820080527-c44a6d7bb636
+## explicit
+github.com/gavv/httpexpect
+# github.com/gavv/monotime v0.0.0-20171021193802-6f8212e8d10d
+## explicit
+github.com/gavv/monotime
+# github.com/go-ini/ini v1.36.1-0.20180420150025-bda519ae5f4c
+## explicit
+github.com/go-ini/ini
+# github.com/go-ozzo/ozzo-routing v2.1.4+incompatible
+## explicit
+github.com/go-ozzo/ozzo-routing
+github.com/go-ozzo/ozzo-routing/access
+github.com/go-ozzo/ozzo-routing/content
+github.com/go-ozzo/ozzo-routing/fault
+# github.com/golang/gddo v0.0.0-20180330180052-416d5fc8c9c8
+## explicit
+github.com/golang/gddo/httputil/header
+# github.com/google/go-cmp v0.2.1-0.20180328201512-5411ab924f9f
+## explicit
+# github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135
+## explicit
+github.com/google/go-querystring/query
+# github.com/gopherjs/gopherjs v0.0.0-20180424202546-8dffc02ea1cb
+## explicit
+# github.com/imkira/go-interpol v1.1.0
+## explicit
+github.com/imkira/go-interpol
+# github.com/jessevdk/go-flags v1.4.1-0.20180331124232-1c38ed7ad0cc
+## explicit
+github.com/jessevdk/go-flags
+# github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
+## explicit
+github.com/jmespath/go-jmespath
+# github.com/jtolds/gls v4.2.1+incompatible
+## explicit
+# github.com/klauspost/compress v1.3.0
+## explicit
+github.com/klauspost/compress/flate
+github.com/klauspost/compress/gzip
+github.com/klauspost/compress/zlib
+# github.com/klauspost/cpuid v1.2.0
+## explicit
+github.com/klauspost/cpuid
+# github.com/mattn/go-colorable v0.1.0
+## explicit
+# github.com/mattn/go-isatty v0.0.4
+## explicit
+# github.com/moul/http2curl v1.0.0
+## explicit
+github.com/moul/http2curl
+# github.com/onsi/ginkgo v1.4.1-0.20180417103117-6d8be987c536
+## explicit
+# github.com/onsi/gomega v1.3.1-0.20180417102829-b7d1a52235cc
+## explicit
+# github.com/pmezard/go-difflib v1.0.0
+## explicit
+github.com/pmezard/go-difflib/difflib
+# github.com/sergi/go-diff v1.0.1-0.20180205163309-da645544ed44
+## explicit
+github.com/sergi/go-diff/diffmatchpatch
+# github.com/sirupsen/logrus v1.0.6-0.20180329225952-778f2e774c72
+## explicit
+github.com/sirupsen/logrus
+# github.com/smartystreets/assertions v0.0.0-20180301161246-7678a5452ebe
+## explicit
+# github.com/smartystreets/goconvey v1.6.4-0.20180222194500-ef6db91d284a
+## explicit
+# github.com/stretchr/testify v1.2.2-0.20180319223459-c679ae2cc0cb
+## explicit
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
+# github.com/valyala/bytebufferpool v1.0.0
+## explicit
+github.com/valyala/bytebufferpool
+# github.com/valyala/fasthttp v0.0.0-20171207120941-e5f51c11919d
+## explicit
+github.com/valyala/fasthttp
+github.com/valyala/fasthttp/fasthttputil
+github.com/valyala/fasthttp/stackless
+# github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
+## explicit
+github.com/xeipuuv/gojsonpointer
+# github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415
+## explicit
+github.com/xeipuuv/gojsonreference
+# github.com/xeipuuv/gojsonschema v0.0.0-20180407105557-2c8e4be869c1
+## explicit
+github.com/xeipuuv/gojsonschema
+# github.com/yalp/jsonpath v0.0.0-20180419081435-91a5860ab683
+## explicit
+github.com/yalp/jsonpath
+# github.com/yudai/gojsondiff v1.0.1-0.20171126075747-e21612694bdd
+## explicit
+github.com/yudai/gojsondiff
+github.com/yudai/gojsondiff/formatter
+# github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82
+## explicit
+github.com/yudai/golcs
+# github.com/yudai/pp v2.0.2-0.20150410014804-be8315415630+incompatible
+## explicit
+# golang.org/x/crypto v0.0.0-20180425071531-b0697eccbea9
+## explicit
+golang.org/x/crypto/cast5
+golang.org/x/crypto/openpgp
+golang.org/x/crypto/openpgp/armor
+golang.org/x/crypto/openpgp/elgamal
+golang.org/x/crypto/openpgp/errors
+golang.org/x/crypto/openpgp/packet
+golang.org/x/crypto/openpgp/s2k
+golang.org/x/crypto/ssh/terminal
+# golang.org/x/net v0.0.0-20180420171651-5f9ae10d9af5
+## explicit
+golang.org/x/net/publicsuffix
+# golang.org/x/sys v0.0.0-20180420145319-79b0c6888797
+## explicit
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# golang.org/x/text v0.3.1-0.20180410181320-7922cc490dd5
+## explicit
+# gopkg.in/airbrake/gobrake.v2 v2.0.9
+## explicit
+# gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2
+## explicit
+# gopkg.in/ini.v1 v1.36.0
+## explicit
+# gopkg.in/yaml.v2 v2.2.1
+## explicit
