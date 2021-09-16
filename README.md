@@ -85,3 +85,18 @@ are aware of the cost before provisioning!
 [terraform-registry]: https://registry.terraform.io/
 [anthology-module]: https://registry.terraform.io/modules/erikvanbrakel/anthology/aws/
 [docker-hub]: https://hub.docker.com/r/erikvanbrakel/anthology/
+
+## Provider file formats and directory struction
+
+The directory structure and file naming conventions must follow the Hashicorp standards for providers, as documented at https://www.terraform.io/docs/internals/provider-registry-protocol.html.
+
+For example, for a provider named `myprovider` in the `example` namespace, the expected setup is like follows (with deviations for the OS and Arch that the provider is built for):
+
+/providers/example/myprovider/0.0.1/terraform-provider-myprovider_0.0.1_linux_amd64.zip
+/providers/example/myprovider/0.0.1/terraform-provider-myprovider_0.0.1_darwin_amd64.zip
+/providers/example/myprovider/0.0.1/terraform-provider-myprovider_0.0.1_windows_amd64.zip
+/providers/example/myprovider/0.0.1/terraform-provider-myprovider_0.0.1_SHA256SUMS.sig
+/providers/example/myprovider/0.0.1/terraform-provider-myprovider_0.0.1_SHA256SUMS
+/providers/example/myprovider/0.0.1/terraform-provider-myprovider_0.0.1.gpg
+
+The SHA245SUMS and SHA256SUMS.sig files are as documented by Hashicorp.  The .gpg file contains an ASCII armored _public_ GPG key used to sign the SHA256SUMS file.
