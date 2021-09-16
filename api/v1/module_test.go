@@ -18,7 +18,7 @@ func TestListModule(t *testing.T) {
 		{"namespace2", "module1", "aws", "2.0.0", nil},
 	}
 
-	runAPITests(t, dataset, []apiTestCase{
+	runModuleAPITests(t, dataset, []apiTestCase{
 		{
 			"get all modules",
 			"GET", "/", "",
@@ -66,7 +66,7 @@ func TestListModuleVersions(t *testing.T) {
 		{"namespace2", "module1", "gcp", "1.0.0", nil},
 	}
 
-	runAPITests(t, dataset, []apiTestCase{
+	runModuleAPITests(t, dataset, []apiTestCase{
 		{
 			"list available versions for a specific module",
 			"GET", "/namespace1/module1/aws/versions", "",
@@ -93,14 +93,14 @@ func TestListModuleVersions(t *testing.T) {
 	})
 }
 
-func TestGetDownloadUrl(t *testing.T) {
+func TestGetModuleDownloadUrl(t *testing.T) {
 	dataset := []testModule{
 		{"namespace1", "module1", "aws", "1.0.0", nil},
 		{"namespace1", "module1", "aws", "2.0.0", nil},
 		{"namespace1", "module1", "aws", "3.0.0", nil},
 	}
 
-	runAPITests(t, dataset, []apiTestCase{
+	runModuleAPITests(t, dataset, []apiTestCase{
 		{
 			"download source code for a specific module version",
 			"GET", "/namespace1/module1/aws/1.0.0/download", "",
@@ -132,7 +132,7 @@ func TestGetDownloadUrl(t *testing.T) {
 	})
 }
 
-func TestListLatestVersions(t *testing.T) {
+func TestListModuleLatestVersions(t *testing.T) {
 	dataset := []testModule{
 		{"namespace1", "module1", "aws", "1.0.0", nil},
 		{"namespace1", "module1", "aws", "2.0.0", nil},
@@ -142,7 +142,7 @@ func TestListLatestVersions(t *testing.T) {
 		{"namespace1", "module1", "azure", "6.6.0", nil},
 	}
 
-	runAPITests(t, dataset, []apiTestCase{
+	runModuleAPITests(t, dataset, []apiTestCase{
 		{
 			"list latest version of module for all providers",
 			"GET", "/namespace1/module1", "",
@@ -175,7 +175,7 @@ func TestGetModule(t *testing.T) {
 		{"namespace1", "module1", "azure", "6.6.0", nil},
 	}
 
-	runAPITests(t, dataset, []apiTestCase{
+	runModuleAPITests(t, dataset, []apiTestCase{
 		{
 			"get a specific module",
 			"GET", "/namespace1/module1/gcp/3.0.0", "",
@@ -219,7 +219,7 @@ func TestPublishModule(t *testing.T) {
 
 	moduleData := "some data"
 
-	runAPITests(t, dataset, []apiTestCase{
+	runModuleAPITests(t, dataset, []apiTestCase{
 		{
 			"publish a new module",
 			"POST", "/namespace1/module1/gcp/3.0.0", moduleData,
@@ -234,11 +234,4 @@ func TestPublishModule(t *testing.T) {
 			},
 		},
 	})
-}
-
-func assertError(error string) func(*testing.T, *httpexpect.Response, *httptest.Server) {
-	return func(t *testing.T, r *httpexpect.Response, server *httptest.Server) {
-		errors := r.JSON().Object().Value("errors").Array()
-		errors.Contains(error)
-	}
 }

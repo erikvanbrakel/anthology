@@ -28,6 +28,9 @@ func main() {
 	case "filesystem":
 		r = registry.NewFilesystemRegistry(app.Config.FileSystem)
 		break
+	case "artifactory":
+		r = registry.NewArtifactoryRegistry(app.Config.Artifactory)
+		break
 	}
 	http.Handle("/", buildRouter(logger, r))
 
@@ -57,12 +60,18 @@ func buildRouter(logger *logrus.Logger, reg registry.Registry) *routing.Router {
 	router.To("GET", "/.well-known/terraform.json", func(c *routing.Context) error {
 		c.Abort()
 		return c.Write(map[string]string{
-			"modules.v1": "/v1/modules/",
+			"modules.v1":   "/v1/modules/",
+			"providers.v1": "/v1/providers/",
 		})
 	})
 
-	rg := router.Group("/v1/modules")
+	mrg := router.Group("/v1/modules")
 
-	v1.ServeModuleResource(rg, services.NewModuleService(reg))
+	v1.ServeModuleResource(mrg, services.NewModuleService(reg))
+
+	prg := router.Group("/v1/providers")
+
+	v1.ServeProviderResource(prg, services.NewProviderService(reg))
+
 	return router
 }

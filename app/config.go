@@ -9,11 +9,12 @@ import (
 var Config = &CommonOptions{}
 
 type CommonOptions struct {
-	Port       int               `short:"p" long:"port" description:"Port the service listens on" default:"8080"`
-	Backend    string            `short:"b" long:"backend" choice:"s3" choice:"filesystem"`
-	S3         S3Options         `group:"S3 configuration" namespace:"s3"`
-	FileSystem FileSystemOptions `group:"Filesystem configuration" namespace:"filesystem"`
-	SSLConfig  SSLOptions        `group:"SSL Configuration" namespace:"ssl"`
+	Port        int                `short:"p" long:"port" description:"Port the service listens on" default:"8080"`
+	Backend     string             `short:"b" long:"backend" choice:"s3" choice:"filesystem" choice:"artifactory"`
+	S3          S3Options          `group:"S3 configuration" namespace:"s3"`
+	FileSystem  FileSystemOptions  `group:"Filesystem configuration" namespace:"filesystem"`
+	Artifactory ArtifactoryOptions `group:"Artifactory configuration" namespace:"artifactory"`
+	SSLConfig   SSLOptions         `group:"SSL Configuration" namespace:"ssl"`
 }
 
 type SSLOptions struct {
@@ -27,7 +28,13 @@ type S3Options struct {
 }
 
 type FileSystemOptions struct {
-	BasePath string `long:"basepath" description:"Basepath to store modules"`
+	BasePath     string `long:"basepath" description:"Basepath to store modules"`
+	ProviderPath string `long:"providerpath" description:"Path to store providers"`
+}
+
+type ArtifactoryOptions struct {
+	ModuleURL   string `long:"moduleurl" description:"Artifactory API URL to store modules"`
+	ProviderURL string `long:"providerurl" description:"Artifactory API URL to store providers"`
 }
 
 func LoadConfig() error {
