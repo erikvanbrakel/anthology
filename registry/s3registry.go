@@ -97,8 +97,7 @@ func (r *S3Registry) getModules(namespace, name, provider string) (modules []mod
 
 func (r *S3Registry) getSession() *session.Session {
 	config := &aws.Config{
-		S3ForcePathStyle: aws.Bool(true),
-		Region:           aws.String("us-east-1"),
+		S3ForcePathStyle: aws.Bool(true)
 	}
 	if r.endpoint != "" {
 		if !strings.HasPrefix(r.endpoint, "https") {
